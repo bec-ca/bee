@@ -1,0 +1,352 @@
+cpp_library:
+  name: alarms
+  sources: alarms.cpp
+  headers: alarms.hpp
+  libs:
+    queue
+    span
+    time
+
+cpp_library:
+  name: binary_format
+  sources: binary_format.cpp
+  headers: binary_format.hpp
+  libs:
+    /bee/data_buffer
+    data_buffer
+    error
+
+cpp_library:
+  name: bus
+  headers: bus.hpp
+
+cpp_library:
+  name: bytes_buffer
+  headers: bytes_buffer.hpp
+
+cpp_library:
+  name: copy
+  headers: copy.hpp
+
+cpp_library:
+  name: data_buffer
+  sources: data_buffer.cpp
+  headers: data_buffer.hpp
+  libs: /bee/util
+
+cpp_test:
+  name: data_buffer_test
+  sources: data_buffer_test.cpp
+  libs:
+    data_buffer
+    format
+    testing
+  output: data_buffer_test.out
+
+cpp_library:
+  name: error
+  sources: error.cpp
+  headers: error.hpp
+  libs:
+    format
+    unit
+
+cpp_test:
+  name: error_test
+  sources: error_test.cpp
+  libs:
+    error
+    format
+    testing
+  output: error_test.out
+
+cpp_library:
+  name: file_descriptor
+  sources: file_descriptor.cpp
+  headers: file_descriptor.hpp
+  libs:
+    data_buffer
+    error
+
+cpp_library:
+  name: file_reader
+  sources: file_reader.cpp
+  headers: file_reader.hpp
+  libs:
+    error
+    file_descriptor
+    reader
+
+cpp_test:
+  name: file_reader_test
+  sources: file_reader_test.cpp
+  libs:
+    file_reader
+    file_writer
+    testing
+  output: file_reader_test.out
+
+cpp_library:
+  name: file_writer
+  sources: file_writer.cpp
+  headers: file_writer.hpp
+  libs:
+    bytes_buffer
+    error
+    file_descriptor
+    writer
+
+cpp_library:
+  name: filesystem
+  sources: filesystem.cpp
+  headers: filesystem.hpp
+  libs:
+    error
+    file_reader
+    file_writer
+
+cpp_library:
+  name: format
+  sources: format.cpp
+  headers: format.hpp
+  libs: to_string
+
+cpp_library:
+  name: format_filesystem
+  headers: format_filesystem.hpp
+  libs: to_string
+
+cpp_library:
+  name: format_map
+  headers: format_map.hpp
+  libs: to_string
+
+cpp_library:
+  name: format_memory
+  headers: format_memory.hpp
+  libs: to_string
+
+cpp_library:
+  name: format_optional
+  headers: format_optional.hpp
+  libs: to_string
+
+cpp_library:
+  name: format_set
+  headers: format_set.hpp
+  libs: to_string
+
+cpp_library:
+  name: format_variant
+  headers: format_variant.hpp
+  libs:
+    to_string
+    type_name
+
+cpp_library:
+  name: format_vector
+  headers: format_vector.hpp
+  libs: to_string
+
+cpp_library:
+  name: hash_functions
+  sources: hash_functions.cpp
+  headers: hash_functions.hpp
+
+cpp_library:
+  name: hex
+  headers: hex.hpp
+
+cpp_library:
+  name: nref
+  headers: nref.hpp
+
+cpp_library:
+  name: os
+  headers: os.hpp
+
+cpp_library:
+  name: pretty_print
+  sources: pretty_print.cpp
+  headers: pretty_print.hpp
+
+cpp_test:
+  name: pretty_print_test
+  sources: pretty_print_test.cpp
+  libs:
+    format
+    pretty_print
+    testing
+  output: pretty_print_test.out
+
+cpp_library:
+  name: queue
+  headers: queue.hpp
+  libs: span
+
+cpp_library:
+  name: reader
+  sources: reader.cpp
+  headers: reader.hpp
+  libs: /bee/error
+
+cpp_library:
+  name: ref
+  headers: ref.hpp
+  libs: nref
+
+cpp_library:
+  name: sampler
+  headers: sampler.hpp
+
+cpp_library:
+  name: signal
+  sources: signal.cpp
+  headers: signal.hpp
+  libs:
+    error
+    file_descriptor
+
+cpp_library:
+  name: simple_checksum
+  sources: simple_checksum.cpp
+  headers: simple_checksum.hpp
+  libs: hex
+
+cpp_library:
+  name: sort
+  headers: sort.hpp
+
+cpp_library:
+  name: span
+  sources: span.cpp
+  headers: span.hpp
+  libs:
+    error
+    format
+    pretty_print
+
+cpp_library:
+  name: string_mixin
+  headers: string_mixin.hpp
+
+cpp_library:
+  name: string_reader
+  sources: string_reader.cpp
+  headers: string_reader.hpp
+  libs: reader
+
+cpp_library:
+  name: string_util
+  sources: string_util.cpp
+  headers: string_util.hpp
+  libs:
+    error
+    util
+
+cpp_test:
+  name: string_util_test
+  sources: string_util_test.cpp
+  libs:
+    format
+    string_util
+    testing
+  output: string_util_test.out
+
+cpp_library:
+  name: string_writer
+  sources: string_writer.cpp
+  headers: string_writer.hpp
+  libs: writer
+
+cpp_library:
+  name: sub_process
+  sources: sub_process.cpp
+  headers: sub_process.hpp
+  libs:
+    error
+    file_descriptor
+    format
+    string_util
+    time
+    util
+
+cpp_test:
+  name: sub_process_test
+  sources: sub_process_test.cpp
+  libs:
+    sub_process
+    testing
+  output: sub_process_test.out
+
+cpp_library:
+  name: sys
+  sources: sys.cpp
+  headers: sys.hpp
+  libs:
+    error
+    time
+
+cpp_test:
+  name: sys_test
+  sources: sys_test.cpp
+  libs:
+    sys
+    testing
+  output: sys_test.out
+
+cpp_library:
+  name: testing
+  sources: testing.cpp
+  headers: testing.hpp
+  libs: format
+
+cpp_library:
+  name: time
+  sources: time.cpp
+  headers: time.hpp
+  libs:
+    error
+    span
+
+cpp_library:
+  name: time_block
+  headers: time_block.hpp
+  libs:
+    span
+    time
+
+cpp_library:
+  name: to_string
+  headers: to_string.hpp
+
+cpp_library:
+  name: type_name
+  headers: type_name.hpp
+
+cpp_library:
+  name: unit
+  headers: unit.hpp
+
+cpp_library:
+  name: util
+  sources: util.cpp
+  headers: util.hpp
+  libs: error
+
+cpp_test:
+  name: util_test
+  sources: util_test.cpp
+  libs:
+    format
+    string_util
+    testing
+    util
+  output: util_test.out
+
+cpp_library:
+  name: writer
+  sources: writer.cpp
+  headers: writer.hpp
+  libs: /bee/error
+

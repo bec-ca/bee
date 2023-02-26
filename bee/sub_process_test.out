@@ -1,0 +1,38 @@
+================================================================================
+Test: run_proc
+num_running_processes: 0
+hello
+num_running_processes: 0
+/usr/bin
+num_running_processes: 0
+
+================================================================================
+Test: spawn_proc_stdout_spec
+num_running_processes: 0
+num_running_processes: 1
+yo
+
+num_running_processes: 0
+
+================================================================================
+Test: spawn_proc_stdin_spec
+num_running_processes: 0
+num_running_processes: 1
+secret code 123
+num_running_processes: 0
+
+================================================================================
+Test: spawn_wait_any
+num_running_processes: 0
+num_running_processes: 1
+num_running_processes: 2
+num_running_processes: 1
+num_running_processes: 0
+true
+true
+
+================================================================================
+Test: output_to_string
+output: 'Ok(yo
+)'
+

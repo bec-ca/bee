@@ -1,0 +1,14 @@
+================================================================================
+Test: tuple_to_vector
+foo bar
+
+================================================================================
+Test: is_one_of
+(is_one_of_v<int, int>) -> true
+(is_one_of_v<float, int>) -> false
+(is_one_of_v<float, float>) -> true
+(is_one_of_v<int, string, float, int>) -> true
+(is_one_of_v<int, string, float, char>) -> false
+(is_one_of_v<int, string, float, int*>) -> false
+(is_one_of_v<string&, int, string>) -> false
+

@@ -1,0 +1,55 @@
+#pragma once
+
+#include "error.hpp"
+#include "span.hpp"
+
+#include <cstdint>
+#include <string>
+
+namespace bee {
+
+struct Time {
+ public:
+  static Time of_timestamp_nanos(int64_t ts_nanos);
+
+  Time();
+
+  Time(const Time&) = default;
+  Time(Time&&) = default;
+
+  Time& operator=(const Time&) = default;
+  Time& operator=(Time&&) = default;
+
+  static Time min();
+  static Time max();
+
+  bool operator==(Time other) const;
+  bool operator!=(Time other) const;
+  bool operator<(Time other) const;
+  bool operator<=(Time other) const;
+  bool operator>(Time other) const;
+  bool operator>=(Time other) const;
+
+  Time& operator+=(Span span);
+  Time operator+(Span span) const;
+
+  Span operator-(Time other) const;
+
+  int64_t to_timestamp_nanos() const;
+  int64_t to_timestamp_secs() const;
+
+  static Time monotonic();
+  static Time now();
+
+  Span diff(const Time& other) const;
+
+  static Time zero();
+
+  std::string to_string() const;
+
+ private:
+  explicit Time(int64_t ts);
+  int64_t _ts_nanos;
+};
+
+} // namespace bee

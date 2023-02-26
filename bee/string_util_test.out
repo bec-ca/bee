@@ -1,0 +1,40 @@
+================================================================================
+Test: split
+------------------------
+str:'foo bar yo' sep:' '
+num_parts:3 parts:['foo','bar','yo']
+------------------------
+str:'foobaryo' sep:' '
+num_parts:1 parts:['foobaryo']
+------------------------
+str:'' sep:' '
+num_parts:1 parts:['']
+------------------------
+str:'foo  bar foobar' sep:' '
+num_parts:4 parts:['foo','','bar','foobar']
+------------------------
+str:'foo  bar foobar' sep:'  '
+num_parts:2 parts:['foo','bar foobar']
+------------------------
+str:'usr/bin/path/there' sep:'/'
+num_parts:4 parts:['usr','bin','path','there']
+
+================================================================================
+Test: split_space
+------------------------
+'foo bar yo'
+num_parts:3 parts:['foo','bar','yo']
+------------------------
+'   foo   bar    yo    '
+num_parts:3 parts:['foo','bar','yo']
+------------------------
+'    '
+num_parts:0 parts:[]
+------------------------
+''
+num_parts:0 parts:[]
+------------------------
+'   foo 
+	  bar   '
+num_parts:2 parts:['foo','bar']
+
