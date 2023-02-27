@@ -14,8 +14,8 @@ struct StringReader final : public Reader {
   static ptr create(std::string&& content);
 
   virtual void close() override;
-  virtual bee::OrError<std::string> read_str(size_t size) override;
-  virtual bee::OrError<size_t> remaining_bytes() override;
+  virtual OrError<std::string> read_str(size_t size) override;
+  virtual OrError<size_t> remaining_bytes() override;
   virtual bool is_eof() override;
 
  private:

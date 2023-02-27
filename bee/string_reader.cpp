@@ -15,7 +15,7 @@ StringReader::ptr StringReader::create(string&& content)
 
 void StringReader::close() {}
 
-bee::OrError<string> StringReader::read_str(size_t size)
+OrError<string> StringReader::read_str(size_t size)
 {
   if (_offset >= _content.size()) { return ""; }
   size_t output_size = std::min(size, _content.size() - _offset);
@@ -24,7 +24,7 @@ bee::OrError<string> StringReader::read_str(size_t size)
   return output;
 }
 
-bee::OrError<size_t> StringReader::remaining_bytes()
+OrError<size_t> StringReader::remaining_bytes()
 {
   return _content.size() - _offset;
 }

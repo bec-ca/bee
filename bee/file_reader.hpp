@@ -15,10 +15,10 @@ struct FileReader final : public Reader {
  public:
   using ptr = std::unique_ptr<FileReader>;
 
-  static bee::OrError<ptr> open(const std::string& filename);
+  static OrError<ptr> open(const std::string& filename);
 
-  static bee::OrError<std::string> read_file(const std::string& filename);
-  static bee::OrError<std::vector<std::byte>> read_file_bytes(
+  static OrError<std::string> read_file(const std::string& filename);
+  static OrError<std::vector<std::byte>> read_file_bytes(
     const std::string& filename);
 
   FileReader(const FileReader&) = delete;
@@ -28,17 +28,17 @@ struct FileReader final : public Reader {
 
   virtual ~FileReader();
 
-  bee::OrError<size_t> read(std::byte* buffer, size_t size);
-  virtual bee::OrError<std::string> read_str(size_t size) override;
+  OrError<size_t> read(std::byte* buffer, size_t size);
+  virtual OrError<std::string> read_str(size_t size) override;
 
-  bee::OrError<std::string> read_line();
-  bee::OrError<std::vector<std::string>> read_all_lines();
+  OrError<std::string> read_line();
+  OrError<std::vector<std::string>> read_all_lines();
 
-  bee::OrError<std::string> read_all();
-  bee::OrError<std::vector<std::byte>> read_all_bytes();
-  bee::OrError<char> read_char();
+  OrError<std::string> read_all();
+  OrError<std::vector<std::byte>> read_all_bytes();
+  OrError<char> read_char();
 
-  virtual bee::OrError<size_t> remaining_bytes() override;
+  virtual OrError<size_t> remaining_bytes() override;
 
   virtual bool is_eof() override;
 

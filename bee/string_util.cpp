@@ -78,10 +78,10 @@ string to_hex(const string& str)
   return out;
 }
 
-bee::OrError<string> of_hex(const string& str)
+OrError<string> of_hex(const string& str)
 {
   if (str.size() % 2 != 0) {
-    return bee::Error("Hex string must have even number of characters");
+    return Error("Hex string must have even number of characters");
   }
 
   auto of_hex_digit = [](char d) -> std::optional<uint8_t> {
@@ -96,7 +96,7 @@ bee::OrError<string> of_hex(const string& str)
     auto d1 = of_hex_digit(str[i]);
     auto d2 = of_hex_digit(str[i + 1]);
     if (!d1.has_value() || !d2.has_value()) {
-      return bee::Error("Not a valid hex string");
+      return Error("Not a valid hex string");
     }
     uint8_t v = *d1 * 16 + *d2;
     out.push_back(v);

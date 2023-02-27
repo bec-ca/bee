@@ -108,7 +108,7 @@ void DataBuffer::prepend(DataBuffer&& other)
   if (_blocks.empty()) {
     _blocks = std::move(other._blocks);
   } else {
-    for (auto& block : bee::rev_it(other._blocks)) {
+    for (auto& block : rev_it(other._blocks)) {
       _blocks.push_front(std::move(block));
     }
   }

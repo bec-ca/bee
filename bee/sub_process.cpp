@@ -43,12 +43,12 @@ struct OutputToStringImpl : public SubProcess::OutputToString {
   virtual void set_fd(const FileDescriptor::shared_ptr& fd) override
   {
     _fd = fd;
-    promise<bee::OrError<string>> prom;
+    promise<OrError<string>> prom;
     _output = prom.get_future();
     _thread = thread(_reader_thread, std::move(prom), _fd);
   }
 
-  virtual bee::OrError<string> get_output() override
+  virtual OrError<string> get_output() override
   {
     _maybe_join();
     return _output.get();
@@ -64,9 +64,9 @@ struct OutputToStringImpl : public SubProcess::OutputToString {
   }
 
   static void _reader_thread(
-    promise<bee::OrError<string>> prom, FileDescriptor::shared_ptr fd)
+    promise<OrError<string>> prom, FileDescriptor::shared_ptr fd)
   {
-    auto fn = [&fd]() -> bee::OrError<string> {
+    auto fn = [&fd]() -> OrError<string> {
       DataBuffer buffer;
       while (true) {
         bail(r, fd->read_all_available(buffer));
@@ -77,19 +77,19 @@ struct OutputToStringImpl : public SubProcess::OutputToString {
     prom.set_value(fn());
   }
 
-  std::future<bee::OrError<string>> _output;
+  std::future<OrError<string>> _output;
 
   std::optional<thread> _thread;
 
   FileDescriptor::shared_ptr _fd;
 };
 
-bee::OrError<Pipe> sys_pipe() { return Pipe::create(); }
+OrError<Pipe> sys_pipe() { return Pipe::create(); }
 
-bee::OrError<Pipe> prep_output_spec(const SubProcess::output_spec_type& spec)
+OrError<Pipe> prep_output_spec(const SubProcess::output_spec_type& spec)
 {
   return visit(
-    [&](auto& output_spec) -> bee::OrError<Pipe> {
+    [&](auto& output_spec) -> OrError<Pipe> {
       using T = std::decay_t<decltype(output_spec)>;
       if constexpr (std::is_same_v<T, SubProcess::DefaultIO>) {
         // Nothing to do here
@@ -111,16 +111,16 @@ bee::OrError<Pipe> prep_output_spec(const SubProcess::output_spec_type& spec)
         output_spec->set_fd(pipe.read_fd);
         return pipe;
       } else {
-        static_assert(bee::always_false_v<T> && "non exaustive visit");
+        static_assert(always_false_v<T> && "non exaustive visit");
       }
     },
     spec);
 }
 
-bee::OrError<Pipe> prep_input_spec(const SubProcess::input_spec_type& spec)
+OrError<Pipe> prep_input_spec(const SubProcess::input_spec_type& spec)
 {
   return visit(
-    [&](auto& input_spec) -> bee::OrError<Pipe> {
+    [&](auto& input_spec) -> OrError<Pipe> {
       using T = std::decay_t<decltype(input_spec)>;
       if constexpr (std::is_same_v<T, SubProcess::DefaultIO>) {
         // Nothing to do here
@@ -140,28 +140,28 @@ bee::OrError<Pipe> prep_input_spec(const SubProcess::input_spec_type& spec)
         input_spec->set_fd(pipe.write_fd);
         return pipe;
       } else {
-        static_assert(bee::always_false_v<T> && "non exaustive visit");
+        static_assert(always_false_v<T> && "non exaustive visit");
       }
     },
     spec);
 }
 
-bee::OrError<bee::Unit> prep_output_on_child(
+OrError<Unit> prep_output_on_child(
   Pipe& output, const FileDescriptor::shared_ptr& child_fd)
 {
   if (output.write_fd != nullptr) {
     bail_unit(output.write_fd->dup_onto(*child_fd));
   }
-  return bee::unit;
+  return unit;
 }
 
-bee::OrError<bee::Unit> prep_input_on_child(
+OrError<Unit> prep_input_on_child(
   Pipe& input, const FileDescriptor::shared_ptr& child_fd)
 {
   if (input.read_fd != nullptr) {
     bail_unit(input.read_fd->dup_onto(*child_fd));
   }
-  return bee::unit;
+  return unit;
 }
 
 struct RunningProcesses {
@@ -174,14 +174,12 @@ struct RunningProcesses {
     return ptr;
   }
 
-  bee::OrError<SubProcess::ptr> find_by_pid(SubProcess::Pid pid)
+  OrError<SubProcess::ptr> find_by_pid(SubProcess::Pid pid)
   {
     const std::lock_guard<std::mutex> lock(_mutex);
     auto& m = _running_processes;
     auto it = m.find(pid);
-    if (it == m.end()) {
-      return bee::Error::format("No such pid: $", pid.to_int());
-    }
+    if (it == m.end()) { return Error::format("No such pid: $", pid.to_int()); }
     return it->second;
   }
 
@@ -263,12 +261,11 @@ bool SubProcess::Pid::operator<(const Pid& other) const
   return _pid < other._pid;
 }
 
-bee::OrError<bee::Unit> SubProcess::Pid::kill()
+OrError<Unit> SubProcess::Pid::kill()
 {
-  if (::kill(_pid, SIGKILL) == 0) { return bee::ok(); }
+  if (::kill(_pid, SIGKILL) == 0) { return ok(); }
 
-  return bee::Error::format(
-    "Failed to send sigkill to process: $", strerror(errno));
+  return Error::format("Failed to send sigkill to process: $", strerror(errno));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -279,7 +276,7 @@ SubProcess::SubProcess(Pid pid) : _pid(pid) {}
 
 SubProcess::~SubProcess() {}
 
-bee::OrError<SubProcess::ptr> SubProcess::spawn(
+OrError<SubProcess::ptr> SubProcess::spawn(
   const SubProcess::CreateProcessArgs& args)
 {
   std::vector<const char*> cargs;
@@ -322,23 +319,22 @@ bee::OrError<SubProcess::ptr> SubProcess::spawn(
       errno,
       strerror(errno),
       args.cmd,
-      bee::join(args.args, " "));
+      join(args.args, " "));
     exit(1);
   } else if (pid == -1) {
-    return bee::Error::format("Failed to fork process: $", strerror(errno));
+    return Error::format("Failed to fork process: $", strerror(errno));
   }
 
   return RunningProcesses::singleton().create_process(Pid::of_int(pid));
 }
 
-bee::OrError<bee::Unit> SubProcess::run(
-  const SubProcess::CreateProcessArgs& args)
+OrError<Unit> SubProcess::run(const SubProcess::CreateProcessArgs& args)
 {
   bail(proc, spawn(args));
   return proc->wait();
 }
 
-bee::OrError<std::optional<SubProcess::ProcessStatus>> SubProcess::wait_any(
+OrError<std::optional<SubProcess::ProcessStatus>> SubProcess::wait_any(
   bool block)
 {
   int flags = 0;
@@ -349,7 +345,7 @@ bee::OrError<std::optional<SubProcess::ProcessStatus>> SubProcess::wait_any(
     return std::nullopt;
   } else if (int_pid == -1) {
     if (errno == ECHILD) { return std::nullopt; }
-    return bee::Error::format("Failed to wait for process: $", strerror(errno));
+    return Error::format("Failed to wait for process: $", strerror(errno));
   }
   int exit_status = WEXITSTATUS(wstatus);
   auto pid = Pid::of_int(int_pid);
@@ -360,41 +356,40 @@ bee::OrError<std::optional<SubProcess::ProcessStatus>> SubProcess::wait_any(
   return SubProcess::ProcessStatus{.proc = proc, .exit_status = exit_status};
 }
 
-bee::OrError<bee::Unit> SubProcess::wait()
+OrError<Unit> SubProcess::wait()
 {
   int wstatus = 0;
   auto ret = waitpid(_pid.to_int(), &wstatus, 0);
   if (ret == 0) {
-    return bee::Error::format("waipid unexpectedly returned 0");
+    return Error::format("waipid unexpectedly returned 0");
   } else if (ret < 0) {
-    return bee::Error::format("waipid returned error: $", strerror(errno));
+    return Error::format("waipid returned error: $", strerror(errno));
   } else if (ret != _pid.to_int()) {
-    return bee::Error::format(
+    return Error::format(
       "waipid returned a value different than the expected pid");
   }
   RunningProcesses::singleton().process_ended(_pid);
   if (WIFEXITED(wstatus)) {
     int exit_status = WEXITSTATUS(wstatus);
     if (exit_status != 0) {
-      return bee::Error::format("Process exited with status $", exit_status);
+      return Error::format("Process exited with status $", exit_status);
     } else {
-      return bee::unit;
+      return unit;
     }
   } else if (WIFSIGNALED(wstatus)) {
-    return bee::Error::format(
+    return Error::format(
       "Process killed by signal $", strsignal(WTERMSIG(wstatus)));
   } else if (WIFSTOPPED(wstatus)) {
-    return bee::Error::format(
+    return Error::format(
       "Process stopped by signal $", strsignal(WSTOPSIG(wstatus)));
   } else if (WIFCONTINUED(wstatus)) {
-    return bee::Error::format("Process continued");
+    return Error::format("Process continued");
   } else {
-    return bee::Error::format(
-      "Process ended abnormally with wstatus $", wstatus);
+    return Error::format("Process ended abnormally with wstatus $", wstatus);
   }
 }
 
-bee::OrError<bee::Unit> SubProcess::kill() { return _pid.kill(); }
+OrError<Unit> SubProcess::kill() { return _pid.kill(); }
 
 const SubProcess::Pid& SubProcess::pid() const { return _pid; }
 

@@ -30,55 +30,53 @@ string FileSystem::read_stream(istream& stream)
   return contents;
 }
 
-bee::OrError<bee::Unit> FileSystem::mkdirs(const fs::path& path)
+OrError<Unit> FileSystem::mkdirs(const fs::path& path)
 {
   error_code ec;
   fs::create_directories(path, ec);
   if (ec) {
-    return bee::Error::format(
+    return Error::format(
       "Failed to create directory '$': $", path, ec.message());
   }
-  return bee::unit;
+  return unit;
 }
 
-bee::OrError<bee::Unit> FileSystem::remove(const fs::path& path)
+OrError<Unit> FileSystem::remove(const fs::path& path)
 {
   error_code ec;
   fs::remove(path, ec);
   if (ec) {
-    return bee::Error::format(
-      "Failed to cremove file '$': $", path, ec.message());
+    return Error::format("Failed to cremove file '$': $", path, ec.message());
   }
-  return bee::unit;
+  return unit;
 }
 
-bee::OrError<bee::Unit> FileSystem::touch_file(const fs::path& filename)
+OrError<Unit> FileSystem::touch_file(const fs::path& filename)
 {
   ofstream output(filename);
   if (!output.good()) {
-    return bee::Error::format("Failed to touch file $", filename);
+    return Error::format("Failed to touch file $", filename);
   }
-  return bee::unit;
+  return unit;
 }
 
-bee::OrError<bee::Unit> FileSystem::copy(
-  const fs::path& from, const fs::path& to)
+OrError<Unit> FileSystem::copy(const fs::path& from, const fs::path& to)
 {
   error_code ec;
   fs::copy(from, to, fs::copy_options::overwrite_existing, ec);
   if (ec) {
-    return bee::Error::format("Failed to copy file: $", ec.message());
+    return Error::format("Failed to copy file: $", ec.message());
   } else {
-    return bee::unit;
+    return unit;
   }
 }
 
-bee::OrError<size_t> FileSystem::file_size(const fs::path& filename)
+OrError<size_t> FileSystem::file_size(const fs::path& filename)
 {
   error_code ec;
   auto size = fs::file_size(filename, ec);
   if (ec) {
-    return bee::Error::format(
+    return Error::format(
       "Failed to check file size '$': $", filename, ec.message());
   }
   return size;
@@ -89,7 +87,7 @@ OrError<Time> FileSystem::file_mtime(const fs::path& filename)
   error_code ec;
   auto mtime = fs::last_write_time(filename, ec);
   if (ec) {
-    return bee::Error::format(
+    return Error::format(
       "Failed to check file mtime '$': $", filename, ec.message());
   }
   return Time::of_nanos_since_epoch(
@@ -122,8 +120,7 @@ OrError<vector<fs::path>> FileSystem::list_regular_files(
     }
   }
   if (ec) {
-    return bee::Error::format(
-      "Failed to list directory '$': $", dir, ec.message());
+    return Error::format("Failed to list directory '$': $", dir, ec.message());
   }
   return output;
 }
@@ -140,8 +137,7 @@ OrError<DirectoryContent> FileSystem::list_dir(const fs::path& dir)
     }
   }
   if (ec) {
-    return bee::Error::format(
-      "Failed to list directory '$': $", dir, ec.message());
+    return Error::format("Failed to list directory '$': $", dir, ec.message());
   }
   return output;
 }

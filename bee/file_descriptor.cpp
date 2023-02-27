@@ -14,21 +14,21 @@ namespace {
 #define bail_syscall(var, syscall, msg...)                                     \
   auto var = (syscall);                                                        \
   if (var < 0) {                                                               \
-    auto err = bee::Error::format("$", strerror(errno));                       \
+    auto err = Error::format("$", strerror(errno));                            \
     err.add_tag_with_location(__FILE__, __LINE__, maybe_format(msg));          \
     return err;                                                                \
   }
 
 #define bail_syscall_unit(syscall, msg...)                                     \
   if ((syscall) < 0) {                                                         \
-    auto err = bee::Error::format("$", strerror(errno));                       \
+    auto err = Error::format("$", strerror(errno));                            \
     err.add_tag_with_location(__FILE__, __LINE__, maybe_format(msg));          \
     return err;                                                                \
   }
 
 char* errno_name() { return strerror(errno); }
 
-bee::OrError<std::pair<int, int>> agnostic_pipe()
+OrError<std::pair<int, int>> agnostic_pipe()
 {
   int fds[2];
 #ifdef __APPLE__
@@ -80,7 +80,7 @@ FileDescriptor::FileDescriptor(FileDescriptor&& other)
 
 FileDescriptor::~FileDescriptor() { close(); }
 
-bee::OrError<FileDescriptor> FileDescriptor::create_file(const string& filename)
+OrError<FileDescriptor> FileDescriptor::create_file(const string& filename)
 {
   bail_syscall(
     fd,
@@ -90,7 +90,7 @@ bee::OrError<FileDescriptor> FileDescriptor::create_file(const string& filename)
   return FileDescriptor(fd);
 }
 
-bee::OrError<FileDescriptor> FileDescriptor::open_file(const string& filename)
+OrError<FileDescriptor> FileDescriptor::open_file(const string& filename)
 {
   bail_syscall(
     fd,
@@ -114,14 +114,14 @@ bool FileDescriptor::is_closed()
   return false;
 }
 
-bee::OrError<ReadResult> FileDescriptor::read(std::byte* data, size_t size)
+OrError<ReadResult> FileDescriptor::read(std::byte* data, size_t size)
 {
   auto ret = ::read(_fd, data, size);
   if (ret == -1) {
     if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
       return ReadResult::empty();
     }
-    return bee::Error::format("Failed to read fd($): $", _fd, errno_name());
+    return Error::format("Failed to read fd($): $", _fd, errno_name());
   }
   if (ret == 0) {
     _eof = true;
@@ -131,7 +131,7 @@ bee::OrError<ReadResult> FileDescriptor::read(std::byte* data, size_t size)
   }
 }
 
-bee::OrError<ReadResult> FileDescriptor::read(DataBuffer& buffer, size_t size)
+OrError<ReadResult> FileDescriptor::read(DataBuffer& buffer, size_t size)
 {
   std::byte bytes[1024];
   size_t bytes_read = 0;
@@ -148,7 +148,7 @@ bee::OrError<ReadResult> FileDescriptor::read(DataBuffer& buffer, size_t size)
   return ReadResult::create(bytes_read, reached_eof);
 }
 
-bee::OrError<ReadResult> FileDescriptor::recv(std::byte* data, size_t size)
+OrError<ReadResult> FileDescriptor::recv(std::byte* data, size_t size)
 {
   auto ret = ::recv(_fd, data, size, 0);
   if (ret == -1) {
@@ -157,12 +157,12 @@ bee::OrError<ReadResult> FileDescriptor::recv(std::byte* data, size_t size)
     } else if (errno == ECONNRESET) {
       return ReadResult::eof();
     }
-    return bee::Error::format("Failed to recv fd($): $", _fd, errno_name());
+    return Error::format("Failed to recv fd($): $", _fd, errno_name());
   }
   return ReadResult::create(ret, ret == 0);
 }
 
-bee::OrError<ReadResult> FileDescriptor::read_all_available(DataBuffer& output)
+OrError<ReadResult> FileDescriptor::read_all_available(DataBuffer& output)
 {
   std::byte buffer[1024 * 2];
   bool reached_eof = false;
@@ -180,7 +180,7 @@ bee::OrError<ReadResult> FileDescriptor::read_all_available(DataBuffer& output)
   return ReadResult::create(bytes_read, reached_eof);
 }
 
-bee::OrError<ReadResult> FileDescriptor::recv_all_available(DataBuffer& output)
+OrError<ReadResult> FileDescriptor::recv_all_available(DataBuffer& output)
 {
   std::byte buffer[1024 * 2];
   bool reached_eof = false;
@@ -198,7 +198,7 @@ bee::OrError<ReadResult> FileDescriptor::recv_all_available(DataBuffer& output)
   return ReadResult::create(bytes_read, reached_eof);
 }
 
-bee::OrError<size_t> FileDescriptor::write(const std::byte* data, size_t size)
+OrError<size_t> FileDescriptor::write(const std::byte* data, size_t size)
 {
   _write_blocked = false;
   if (size == 0) { return 0; }
@@ -208,26 +208,26 @@ bee::OrError<size_t> FileDescriptor::write(const std::byte* data, size_t size)
       _write_blocked = true;
       return 0;
     }
-    return bee::Error::format("Failed to write file: $", errno_name());
+    return Error::format("Failed to write file: $", errno_name());
   }
   return ret;
 }
 
-bee::OrError<size_t> FileDescriptor::write(const string& data)
+OrError<size_t> FileDescriptor::write(const string& data)
 {
   return write(reinterpret_cast<const std::byte*>(data.data()), data.size());
 }
 
-bee::OrError<bee::Unit> FileDescriptor::dup_onto(const FileDescriptor& onto)
+OrError<Unit> FileDescriptor::dup_onto(const FileDescriptor& onto)
 {
-  if (_fd == -1) return bee::unit;
+  if (_fd == -1) return unit;
   bail_syscall(ret, dup2(_fd, onto._fd), "dup2 failed");
-  return bee::unit;
+  return unit;
 }
 
-bee::OrError<FileDescriptor> FileDescriptor::dup()
+OrError<FileDescriptor> FileDescriptor::dup()
 {
-  if (_fd == -1) return bee::Error("FileDescriptor is not open");
+  if (_fd == -1) return Error("FileDescriptor is not open");
   bail_syscall(fd, ::dup(_fd), "dup failed");
   return FileDescriptor(fd);
 }
@@ -242,17 +242,17 @@ std::unique_ptr<FileDescriptor> FileDescriptor::to_unique() &&
   return std::make_unique<FileDescriptor>(std::move(*this));
 }
 
-bee::OrError<bee::Unit> FileDescriptor::flush()
+OrError<Unit> FileDescriptor::flush()
 {
   if (_fd != -1) {
     int ret = ::fsync(_fd);
     if (ret != 0) {
       if (errno != EROFS && errno != EINVAL) {
-        return bee::Error::format("fsync failed: $", errno_name());
+        return Error::format("fsync failed: $", errno_name());
       }
     }
   }
-  return bee::ok();
+  return ok();
 }
 
 int FileDescriptor::int_fd() const { return _fd; }
@@ -279,7 +279,7 @@ bool FileDescriptor::is_eof() const { return _eof; }
 
 bool FileDescriptor::is_tty() const { return ::isatty(_fd) == 1; }
 
-bee::OrError<bee::Unit> FileDescriptor::set_blocking(bool blocking)
+OrError<Unit> FileDescriptor::set_blocking(bool blocking)
 {
   bail_syscall(flags, fcntl(_fd, F_GETFL), "fcnt call failed");
   if (blocking) {
@@ -288,12 +288,12 @@ bee::OrError<bee::Unit> FileDescriptor::set_blocking(bool blocking)
     flags |= O_NONBLOCK;
   }
   bail_syscall(ret, fcntl(_fd, F_SETFL, flags), "fcntl call failed");
-  return bee::ok();
+  return ok();
 }
 
 bool FileDescriptor::is_write_blocked() const { return _write_blocked; }
 
-bee::OrError<size_t> FileDescriptor::send(const std::byte* data, size_t size)
+OrError<size_t> FileDescriptor::send(const std::byte* data, size_t size)
 {
   _write_blocked = false;
   if (size == 0) { return 0; }
@@ -311,7 +311,7 @@ bee::OrError<size_t> FileDescriptor::send(const std::byte* data, size_t size)
   return ret;
 }
 
-bee::OrError<std::optional<FileDescriptor>> FileDescriptor::accept()
+OrError<std::optional<FileDescriptor>> FileDescriptor::accept()
 {
   int client_fd = ::accept(_fd, nullptr, nullptr);
   if (client_fd < 0) {
@@ -324,16 +324,16 @@ bee::OrError<std::optional<FileDescriptor>> FileDescriptor::accept()
   return FileDescriptor(client_fd);
 }
 
-bee::OrError<bee::Unit> FileDescriptor::seek(size_t pos)
+OrError<Unit> FileDescriptor::seek(size_t pos)
 {
-  if (_fd == -1) { return bee::Error("file closed"); }
+  if (_fd == -1) { return Error("file closed"); }
   bail_syscall_unit(lseek(_fd, pos, SEEK_SET));
-  return bee::ok();
+  return ok();
 }
 
-bee::OrError<size_t> FileDescriptor::remaining_bytes()
+OrError<size_t> FileDescriptor::remaining_bytes()
 {
-  if (_fd == -1) { return bee::Error("file closed"); }
+  if (_fd == -1) { return Error("file closed"); }
   bail_syscall(cur, lseek(_fd, 0, SEEK_CUR));
   bail_syscall(size, lseek(_fd, 0, SEEK_END));
   bail_syscall_unit(lseek(_fd, cur, SEEK_SET));
@@ -352,7 +352,7 @@ void Pipe::close()
   if (write_fd != nullptr) { write_fd->close(); }
 }
 
-bee::OrError<Pipe> Pipe::create()
+OrError<Pipe> Pipe::create()
 {
   bail(fds, agnostic_pipe());
   return Pipe{

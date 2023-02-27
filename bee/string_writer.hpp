@@ -14,7 +14,7 @@ struct StringWriter final : public Writer {
 
   virtual void close() override;
 
-  virtual bee::OrError<bee::Unit> write(const std::string& data) override;
+  virtual OrError<Unit> write(const std::string& data) override;
 
   std::string& content();
 

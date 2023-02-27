@@ -13,7 +13,7 @@ template <class... T> struct to_string<std::variant<T...>> {
   {
     return std::visit(
       []<class V>(const V& v) {
-        return format("[$ $]", bee::TypeName<V>::name(), v);
+        return format("[$ $]", TypeName<V>::name(), v);
       },
       value);
   }

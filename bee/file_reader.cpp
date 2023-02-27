@@ -32,7 +32,7 @@ void append_bytes(T& output, const std::byte* begin, const std::byte* end)
 // FileReader
 //
 
-bee::OrError<FileReader::ptr> FileReader::open(const string& filename)
+OrError<FileReader::ptr> FileReader::open(const string& filename)
 {
   bail(fd, FileDescriptor::open_file(filename));
 
@@ -41,7 +41,7 @@ bee::OrError<FileReader::ptr> FileReader::open(const string& filename)
 
 FileReader::~FileReader() {}
 
-bee::OrError<size_t> FileReader::read(std::byte* buffer, size_t size)
+OrError<size_t> FileReader::read(std::byte* buffer, size_t size)
 {
   size_t total_read = 0;
 
@@ -62,7 +62,7 @@ bee::OrError<size_t> FileReader::read(std::byte* buffer, size_t size)
   return total_read;
 }
 
-bee::OrError<string> FileReader::read_str(size_t size)
+OrError<string> FileReader::read_str(size_t size)
 {
   string output;
   output.resize(size);
@@ -71,7 +71,7 @@ bee::OrError<string> FileReader::read_str(size_t size)
   return output;
 }
 
-bee::OrError<string> FileReader::read_line()
+OrError<string> FileReader::read_line()
 {
   string output;
   bool found_eol = false;
@@ -89,7 +89,7 @@ bee::OrError<string> FileReader::read_line()
   return output;
 }
 
-bee::OrError<vector<string>> FileReader::read_all_lines()
+OrError<vector<string>> FileReader::read_all_lines()
 {
   vector<string> output;
   while (!is_eof()) {
@@ -99,7 +99,7 @@ bee::OrError<vector<string>> FileReader::read_all_lines()
   return output;
 }
 
-bee::OrError<string> FileReader::read_all()
+OrError<string> FileReader::read_all()
 {
   string output;
   while (_maybe_read_more()) {
@@ -109,7 +109,7 @@ bee::OrError<string> FileReader::read_all()
   return output;
 }
 
-bee::OrError<vector<std::byte>> FileReader::read_all_bytes()
+OrError<vector<std::byte>> FileReader::read_all_bytes()
 {
   vector<std::byte> output;
   while (_maybe_read_more()) {
@@ -119,15 +119,15 @@ bee::OrError<vector<std::byte>> FileReader::read_all_bytes()
   return output;
 }
 
-bee::OrError<char> FileReader::read_char()
+OrError<char> FileReader::read_char()
 {
   if (!_maybe_read_more()) {
     if (_last_error.has_value()) {
       return *_last_error;
     } else if (is_eof()) {
-      return bee::Error("EOF");
+      return Error("EOF");
     } else {
-      return bee::Error("Unexpected error");
+      return Error("Unexpected error");
     }
   }
   return std::to_integer<char>(_buffer[_buffer_pos++]);
@@ -186,14 +186,13 @@ bool FileReader::_maybe_read_more()
   return true;
 }
 
-bee::OrError<string> FileReader::read_file(const string& filename)
+OrError<string> FileReader::read_file(const string& filename)
 {
   bail(reader, FileReader::open(filename));
   return reader->read_all();
 }
 
-bee::OrError<vector<std::byte>> FileReader::read_file_bytes(
-  const string& filename)
+OrError<vector<std::byte>> FileReader::read_file_bytes(const string& filename)
 {
   bail(reader, FileReader::open(filename));
   return reader->read_all_bytes();
@@ -213,9 +212,6 @@ const std::byte* FileReader::buffer_end() const
 
 void FileReader::clear_buffer() { _buffer_pos = (_buffer_size = 0); }
 
-bee::OrError<size_t> FileReader::remaining_bytes()
-{
-  return _fd->remaining_bytes();
-}
+OrError<size_t> FileReader::remaining_bytes() { return _fd->remaining_bytes(); }
 
 } // namespace bee

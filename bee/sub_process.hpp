@@ -42,7 +42,7 @@ struct SubProcess {
 
     bool operator<(const Pid& other) const;
 
-    bee::OrError<bee::Unit> kill();
+    OrError<Unit> kill();
 
    private:
     explicit Pid(int pid);
@@ -57,7 +57,7 @@ struct SubProcess {
 
     virtual ~OutputToString();
 
-    virtual bee::OrError<std::string> get_output() = 0;
+    virtual OrError<std::string> get_output() = 0;
 
     virtual void set_fd(const FileDescriptor::shared_ptr& fd) = 0;
   };
@@ -88,15 +88,15 @@ struct SubProcess {
 
   ~SubProcess();
 
-  static bee::OrError<ptr> spawn(const CreateProcessArgs& args);
+  static OrError<ptr> spawn(const CreateProcessArgs& args);
 
-  static bee::OrError<bee::Unit> run(const CreateProcessArgs& args);
+  static OrError<Unit> run(const CreateProcessArgs& args);
 
-  static bee::OrError<std::optional<ProcessStatus>> wait_any(bool block);
+  static OrError<std::optional<ProcessStatus>> wait_any(bool block);
 
-  bee::OrError<bee::Unit> wait();
+  OrError<Unit> wait();
 
-  bee::OrError<bee::Unit> kill();
+  OrError<Unit> kill();
 
   explicit SubProcess(Pid pid);
 

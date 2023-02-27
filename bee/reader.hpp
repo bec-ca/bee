@@ -13,8 +13,8 @@ struct Reader {
   virtual ~Reader();
 
   virtual void close() = 0;
-  virtual bee::OrError<size_t> remaining_bytes() = 0;
-  virtual bee::OrError<std::string> read_str(size_t size) = 0;
+  virtual OrError<size_t> remaining_bytes() = 0;
+  virtual OrError<std::string> read_str(size_t size) = 0;
   virtual bool is_eof() = 0;
 };
 

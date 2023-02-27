@@ -11,7 +11,7 @@ struct Writer {
   using ptr = std::shared_ptr<Writer>;
   virtual ~Writer();
   virtual void close() = 0;
-  virtual bee::OrError<bee::Unit> write(const std::string& data) = 0;
+  virtual OrError<Unit> write(const std::string& data) = 0;
 };
 
 } // namespace bee

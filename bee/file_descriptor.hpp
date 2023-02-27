@@ -39,37 +39,37 @@ struct FileDescriptor {
   FileDescriptor& operator=(const FileDescriptor& other) = delete;
   FileDescriptor& operator=(FileDescriptor&&) = delete;
 
-  static bee::OrError<FileDescriptor> create_file(const std::string& filename);
+  static OrError<FileDescriptor> create_file(const std::string& filename);
 
-  static bee::OrError<FileDescriptor> open_file(const std::string& filename);
+  static OrError<FileDescriptor> open_file(const std::string& filename);
 
   bool close();
   bool is_closed();
 
   bool empty();
 
-  bee::OrError<bee::Unit> dup_onto(const FileDescriptor& onto);
-  bee::OrError<FileDescriptor> dup();
+  OrError<Unit> dup_onto(const FileDescriptor& onto);
+  OrError<FileDescriptor> dup();
 
   shared_ptr to_shared() &&;
   unique_ptr to_unique() &&;
 
-  bee::OrError<size_t> send(const std::byte* data, size_t size);
+  OrError<size_t> send(const std::byte* data, size_t size);
 
-  bee::OrError<size_t> write(const std::byte* data, size_t size);
-  bee::OrError<size_t> write(const std::string& data);
+  OrError<size_t> write(const std::byte* data, size_t size);
+  OrError<size_t> write(const std::string& data);
 
-  bee::OrError<ReadResult> read(std::byte* data, size_t size);
-  bee::OrError<ReadResult> recv(std::byte* data, size_t size);
+  OrError<ReadResult> read(std::byte* data, size_t size);
+  OrError<ReadResult> recv(std::byte* data, size_t size);
 
-  bee::OrError<ReadResult> read(DataBuffer& buffer, size_t size);
+  OrError<ReadResult> read(DataBuffer& buffer, size_t size);
 
-  bee::OrError<ReadResult> read_all_available(DataBuffer& buffer);
-  bee::OrError<ReadResult> recv_all_available(DataBuffer& buffer);
+  OrError<ReadResult> read_all_available(DataBuffer& buffer);
+  OrError<ReadResult> recv_all_available(DataBuffer& buffer);
 
-  bee::OrError<std::optional<FileDescriptor>> accept();
+  OrError<std::optional<FileDescriptor>> accept();
 
-  bee::OrError<bee::Unit> flush();
+  OrError<Unit> flush();
 
   int int_fd() const;
 
@@ -81,12 +81,12 @@ struct FileDescriptor {
   static const shared_ptr& stderr_filedesc();
   static const shared_ptr& stdin_filedesc();
 
-  bee::OrError<bee::Unit> set_blocking(bool blocking);
+  OrError<Unit> set_blocking(bool blocking);
 
   bool is_write_blocked() const;
 
-  bee::OrError<bee::Unit> seek(size_t pos);
-  bee::OrError<size_t> remaining_bytes();
+  OrError<Unit> seek(size_t pos);
+  OrError<size_t> remaining_bytes();
 
  private:
   int _fd;
@@ -102,7 +102,7 @@ struct Pipe {
 
   void close();
 
-  static bee::OrError<Pipe> create();
+  static OrError<Pipe> create();
 };
 
 } // namespace bee

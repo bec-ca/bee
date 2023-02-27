@@ -20,15 +20,15 @@ struct DirectoryContent {
 struct FileSystem {
   static std::string read_stream(std::istream& stream);
 
-  static bee::OrError<bee::Unit> mkdirs(const fs::path& path);
+  static OrError<Unit> mkdirs(const fs::path& path);
 
-  static bee::OrError<bee::Unit> remove(const fs::path& path);
+  static OrError<Unit> remove(const fs::path& path);
 
-  static bee::OrError<bee::Unit> touch_file(const fs::path& filename);
+  static OrError<Unit> touch_file(const fs::path& filename);
 
-  static bee::OrError<size_t> file_size(const fs::path& filename);
+  static OrError<size_t> file_size(const fs::path& filename);
 
-  static bee::OrError<bee::Unit> copy(const fs::path& from, const fs::path& to);
+  static OrError<Unit> copy(const fs::path& from, const fs::path& to);
 
   static OrError<Time> file_mtime(const fs::path& filename);
 

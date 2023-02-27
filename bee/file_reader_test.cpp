@@ -24,8 +24,8 @@ string create_content()
 TEST(basic)
 {
   string content = create_content();
-  must_unit(bee::FileWriter::save_file(tmp_filename, content));
-  must(content_read, bee::FileReader::read_file(tmp_filename));
+  must_unit(FileWriter::save_file(tmp_filename, content));
+  must(content_read, FileReader::read_file(tmp_filename));
   print_line(content_read == content);
   print_line(content.size());
 }
@@ -33,8 +33,8 @@ TEST(basic)
 TEST(read_by_blocks)
 {
   string content = create_content();
-  must_unit(bee::FileWriter::save_file(tmp_filename, content));
-  must(file, bee::FileReader::open(tmp_filename));
+  must_unit(FileWriter::save_file(tmp_filename, content));
+  must(file, FileReader::open(tmp_filename));
   string content_read;
   char buf[1024];
   while (!file->is_eof()) {

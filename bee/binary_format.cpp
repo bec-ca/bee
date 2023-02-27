@@ -49,13 +49,13 @@ void BinaryFormat::write_var_uint(DataBuffer& buffer, uint64_t value)
   buffer.write(std::move(data));
 }
 
-bee::OrError<uint64_t> BinaryFormat::read_var_uint(DataBuffer& buffer)
+OrError<uint64_t> BinaryFormat::read_var_uint(DataBuffer& buffer)
 {
   uint64_t output = 0;
   int shift = 0;
   while (true) {
     if (buffer.empty()) {
-      return bee::Error("Unexpected end of buffer when reading varint");
+      return Error("Unexpected end of buffer when reading varint");
     }
     uint8_t c = std::to_integer<uint8_t>(buffer.read_byte());
     uint64_t v = (c & ((1 << 7) - 1));
@@ -93,7 +93,7 @@ void BinaryFormat::write_size_and_string(DataBuffer& buffer, string str)
   buffer.write(std::move(str));
 }
 
-bee::OrError<string> BinaryFormat::read_size_and_string(DataBuffer& buffer)
+OrError<string> BinaryFormat::read_size_and_string(DataBuffer& buffer)
 {
   bail(size, read_var_uint(buffer));
   return buffer.read_string(size);

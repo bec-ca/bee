@@ -11,10 +11,10 @@ enum class SignalCode {
 };
 
 struct Signal {
-  static bee::OrError<bee::Unit> block_signal(SignalCode signal);
+  static OrError<Unit> block_signal(SignalCode signal);
 
 #ifdef __linux
-  static bee::OrError<FileDescriptor> create_signal_fd(SignalCode signal);
+  static OrError<FileDescriptor> create_signal_fd(SignalCode signal);
 #endif
 };
 

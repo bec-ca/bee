@@ -11,10 +11,10 @@ StringWriter::ptr StringWriter::create() { return make_shared<StringWriter>(); }
 
 void StringWriter::close() {}
 
-bee::OrError<bee::Unit> StringWriter::write(const string& data)
+OrError<Unit> StringWriter::write(const string& data)
 {
   _content += data;
-  return bee::ok();
+  return ok();
 }
 
 string& StringWriter::content() { return _content; }
