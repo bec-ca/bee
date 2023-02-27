@@ -10,7 +10,7 @@ namespace bee {
 
 struct Time {
  public:
-  static Time of_timestamp_nanos(int64_t ts_nanos);
+  static Time of_nanos_since_epoch(int64_t ts_nanos);
 
   Time();
 
@@ -35,8 +35,8 @@ struct Time {
 
   Span operator-(Time other) const;
 
-  int64_t to_timestamp_nanos() const;
-  int64_t to_timestamp_secs() const;
+  int64_t to_nanos_since_epoch() const;
+  int64_t to_secs_since_epoch() const;
 
   static Time monotonic();
   static Time now();

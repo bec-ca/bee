@@ -104,6 +104,8 @@ cpp_library:
     error
     file_reader
     file_writer
+    format_filesystem
+    time
 
 cpp_library:
   name: format
@@ -278,22 +280,6 @@ cpp_test:
     sub_process
     testing
   output: sub_process_test.out
-
-cpp_library:
-  name: sys
-  sources: sys.cpp
-  headers: sys.hpp
-  libs:
-    error
-    time
-
-cpp_test:
-  name: sys_test
-  sources: sys_test.cpp
-  libs:
-    sys
-    testing
-  output: sys_test.out
 
 cpp_library:
   name: testing

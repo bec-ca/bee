@@ -62,6 +62,13 @@ template <class T, class... Ts> auto compose_vector(T&& first, Ts&&... tail)
   return output;
 }
 
+template <class T, class... Ts> std::vector<T> compose_vector(Ts&&... tail)
+{
+  std::vector<T> output;
+  concat_many(output, std::forward<Ts>(tail)...);
+  return output;
+}
+
 template <class T, class... Ts> auto make_vec(T&& v, Ts&&... vs)
 {
   return std::vector<std::decay_t<T>>{v, std::forward<Ts>(vs)...};
