@@ -29,9 +29,9 @@ OrError<Unit> write_to_fd(
 // FileWriter
 //
 
-OrError<FileWriter::ptr> FileWriter::create(const string& filename)
+OrError<FileWriter::ptr> FileWriter::create(const FilePath& filename)
 {
-  bail(fd, FileDescriptor::create_file(filename));
+  bail(fd, FileDescriptor::create_file(filename.to_std_path()));
   return ptr(new FileWriter(std::move(fd)));
 }
 
@@ -75,7 +75,7 @@ OrError<Unit> FileWriter::write(const vector<std::byte>& data)
 }
 
 OrError<Unit> FileWriter::save_file(
-  const string& filename, const string& content)
+  const FilePath& filename, const string& content)
 {
   bail(file, FileWriter::create(filename));
   bail_unit(file->write(content));
@@ -83,7 +83,7 @@ OrError<Unit> FileWriter::save_file(
 }
 
 OrError<Unit> FileWriter::save_file(
-  const string& filename, const vector<std::byte>& content)
+  const FilePath& filename, const vector<std::byte>& content)
 {
   bail(file, FileWriter::create(filename));
   bail_unit(file->write(content));

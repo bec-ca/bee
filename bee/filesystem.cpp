@@ -1,8 +1,10 @@
 #include "filesystem.hpp"
 
+#include "bee/file_path.hpp"
 #include "file_reader.hpp"
 #include "file_writer.hpp"
 #include "format_filesystem.hpp"
+#include "util.hpp"
 
 #include <chrono>
 #include <filesystem>
@@ -30,10 +32,10 @@ string FileSystem::read_stream(istream& stream)
   return contents;
 }
 
-OrError<Unit> FileSystem::mkdirs(const fs::path& path)
+OrError<Unit> FileSystem::mkdirs(const FilePath& path)
 {
   error_code ec;
-  fs::create_directories(path, ec);
+  fs::create_directories(path.to_std_path(), ec);
   if (ec) {
     return Error::format(
       "Failed to create directory '$': $", path, ec.message());
@@ -41,29 +43,33 @@ OrError<Unit> FileSystem::mkdirs(const fs::path& path)
   return unit;
 }
 
-OrError<Unit> FileSystem::remove(const fs::path& path)
+OrError<Unit> FileSystem::remove(const FilePath& path)
 {
   error_code ec;
-  fs::remove(path, ec);
+  fs::remove(path.to_std_path(), ec);
   if (ec) {
     return Error::format("Failed to cremove file '$': $", path, ec.message());
   }
   return unit;
 }
 
-OrError<Unit> FileSystem::touch_file(const fs::path& filename)
+OrError<Unit> FileSystem::touch_file(const FilePath& filename)
 {
-  ofstream output(filename);
+  ofstream output(filename.to_std_path());
   if (!output.good()) {
     return Error::format("Failed to touch file $", filename);
   }
   return unit;
 }
 
-OrError<Unit> FileSystem::copy(const fs::path& from, const fs::path& to)
+OrError<Unit> FileSystem::copy(const FilePath& from, const FilePath& to)
 {
   error_code ec;
-  fs::copy(from, to, fs::copy_options::overwrite_existing, ec);
+  fs::copy(
+    from.to_std_path(),
+    to.to_std_path(),
+    fs::copy_options::overwrite_existing,
+    ec);
   if (ec) {
     return Error::format("Failed to copy file: $", ec.message());
   } else {
@@ -71,10 +77,10 @@ OrError<Unit> FileSystem::copy(const fs::path& from, const fs::path& to)
   }
 }
 
-OrError<size_t> FileSystem::file_size(const fs::path& filename)
+OrError<size_t> FileSystem::file_size(const FilePath& filename)
 {
   error_code ec;
-  auto size = fs::file_size(filename, ec);
+  auto size = fs::file_size(filename.to_std_path(), ec);
   if (ec) {
     return Error::format(
       "Failed to check file size '$': $", filename, ec.message());
@@ -82,10 +88,10 @@ OrError<size_t> FileSystem::file_size(const fs::path& filename)
   return size;
 }
 
-OrError<Time> FileSystem::file_mtime(const fs::path& filename)
+OrError<Time> FileSystem::file_mtime(const FilePath& filename)
 {
   error_code ec;
-  auto mtime = fs::last_write_time(filename, ec);
+  auto mtime = fs::last_write_time(filename.to_std_path(), ec);
   if (ec) {
     return Error::format(
       "Failed to check file mtime '$': $", filename, ec.message());
@@ -96,24 +102,22 @@ OrError<Time> FileSystem::file_mtime(const fs::path& filename)
       .count());
 }
 
-bool FileSystem::exists(const fs::path& filename)
+bool FileSystem::exists(const FilePath& filename)
 {
-  return fs::exists(filename);
+  return fs::exists(filename.to_std_path());
 }
 
-OrError<vector<fs::path>> FileSystem::list_regular_files(
-  const fs::path& dir, bool recursive)
+OrError<vector<FilePath>> FileSystem::list_regular_files(
+  const FilePath& dir, bool recursive)
 {
   error_code ec;
-  vector<fs::path> output;
-  for (const auto& p : fs::directory_iterator(dir, ec)) {
-    auto& path = p.path();
+  vector<FilePath> output;
+  for (const auto& p : fs::directory_iterator(dir.to_std_path(), ec)) {
+    auto path = FilePath::of_std_path(p.path());
     if (p.is_directory()) {
       if (recursive) {
         bail(sub_files, list_regular_files(path, true));
-        for (auto& file : sub_files) {
-          output.push_back(path.filename() / file);
-        }
+        concat(output, sub_files);
       }
     } else if (p.is_regular_file()) {
       output.push_back(path);
@@ -125,15 +129,16 @@ OrError<vector<fs::path>> FileSystem::list_regular_files(
   return output;
 }
 
-OrError<DirectoryContent> FileSystem::list_dir(const fs::path& dir)
+OrError<DirectoryContent> FileSystem::list_dir(const FilePath& dir)
 {
   error_code ec;
   DirectoryContent output;
-  for (const auto& p : fs::directory_iterator(dir, ec)) {
+  for (const auto& p : fs::directory_iterator(dir.to_std_path(), ec)) {
+    auto path = FilePath::of_std_path(p.path());
     if (p.is_regular_file()) {
-      output.regular_files.push_back(p.path());
+      output.regular_files.push_back(path);
     } else if (p.is_directory()) {
-      output.directories.push_back(p.path());
+      output.directories.push_back(path);
     }
   }
   if (ec) {

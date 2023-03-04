@@ -3,6 +3,8 @@
 #include "error.hpp"
 #include "time.hpp"
 
+#include "file_path.hpp"
+
 #include <filesystem>
 #include <istream>
 #include <string>
@@ -10,34 +12,34 @@
 
 namespace bee {
 
-namespace fs = std::filesystem;
+// TODO: add temp_directory_path, current_path
 
 struct DirectoryContent {
-  std::vector<fs::path> regular_files;
-  std::vector<fs::path> directories;
+  std::vector<FilePath> regular_files;
+  std::vector<FilePath> directories;
 };
 
 struct FileSystem {
   static std::string read_stream(std::istream& stream);
 
-  static OrError<Unit> mkdirs(const fs::path& path);
+  static OrError<Unit> mkdirs(const FilePath& path);
 
-  static OrError<Unit> remove(const fs::path& path);
+  static OrError<Unit> remove(const FilePath& path);
 
-  static OrError<Unit> touch_file(const fs::path& filename);
+  static OrError<Unit> touch_file(const FilePath& filename);
 
-  static OrError<size_t> file_size(const fs::path& filename);
+  static OrError<size_t> file_size(const FilePath& filename);
 
-  static OrError<Unit> copy(const fs::path& from, const fs::path& to);
+  static OrError<Unit> copy(const FilePath& from, const FilePath& to);
 
-  static OrError<Time> file_mtime(const fs::path& filename);
+  static OrError<Time> file_mtime(const FilePath& filename);
 
-  static bool exists(const fs::path& filename);
+  static bool exists(const FilePath& filename);
 
-  static OrError<std::vector<fs::path>> list_regular_files(
-    const fs::path& dir, bool recursive = false);
+  static OrError<std::vector<FilePath>> list_regular_files(
+    const FilePath& dir, bool recursive = false);
 
-  static OrError<DirectoryContent> list_dir(const fs::path& dir);
+  static OrError<DirectoryContent> list_dir(const FilePath& dir);
 };
 
 } // namespace bee

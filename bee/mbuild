@@ -69,12 +69,18 @@ cpp_library:
     error
 
 cpp_library:
+  name: file_path
+  sources: file_path.cpp
+  headers: file_path.hpp
+
+cpp_library:
   name: file_reader
   sources: file_reader.cpp
   headers: file_reader.hpp
   libs:
     error
     file_descriptor
+    file_path
     reader
 
 cpp_test:
@@ -94,6 +100,7 @@ cpp_library:
     bytes_buffer
     error
     file_descriptor
+    file_path
     writer
 
 cpp_library:
@@ -101,11 +108,26 @@ cpp_library:
   sources: filesystem.cpp
   headers: filesystem.hpp
   libs:
+    /bee/file_path
     error
+    file_path
     file_reader
     file_writer
     format_filesystem
     time
+
+cpp_test:
+  name: filesystem_test
+  sources: filesystem_test.cpp
+  libs:
+    error
+    filesystem
+    format
+    format_filesystem
+    format_vector
+    string_util
+    testing
+  output: filesystem_test.out
 
 cpp_library:
   name: format

@@ -8,7 +8,7 @@ using std::string;
 namespace bee {
 namespace {
 
-const char* tmp_filename = "/tmp/tmp2";
+FilePath tmp_filename = FilePath::of_string("/tmp/tmp2");
 
 string create_content()
 {

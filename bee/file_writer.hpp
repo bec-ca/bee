@@ -3,6 +3,7 @@
 #include "bytes_buffer.hpp"
 #include "error.hpp"
 #include "file_descriptor.hpp"
+#include "file_path.hpp"
 #include "writer.hpp"
 
 #include <array>
@@ -15,7 +16,7 @@ struct FileWriter final : public Writer {
  public:
   using ptr = std::unique_ptr<FileWriter>;
 
-  static OrError<ptr> create(const std::string& filename);
+  static OrError<ptr> create(const FilePath& filename);
 
   FileWriter(const FileWriter&) = delete;
   FileWriter(FileWriter&& other) = delete;
@@ -32,9 +33,9 @@ struct FileWriter final : public Writer {
   virtual void close() override;
 
   static OrError<Unit> save_file(
-    const std::string& filename, const std::string& content);
+    const FilePath& filename, const std::string& content);
   static OrError<Unit> save_file(
-    const std::string& filename, const std::vector<std::byte>& content);
+    const FilePath& filename, const std::vector<std::byte>& content);
 
   OrError<Unit> flush();
 

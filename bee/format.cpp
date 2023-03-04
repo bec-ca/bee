@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <sstream>
-#include <syncstream>
 
 using std::cerr;
 using std::cout;

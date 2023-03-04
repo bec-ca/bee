@@ -3,6 +3,7 @@
 #include "error.hpp"
 
 #include <algorithm>
+#include <concepts>
 #include <set>
 #include <string>
 #include <tuple>
@@ -14,6 +15,11 @@ namespace bee {
 ////////////////////////////////////////////////////////////////////////////////
 // vector utils
 //
+
+template <class U, class T>
+concept can_be_concatenated_to_vector =
+  std::convertible_to<U, T> ||
+  std::convertible_to<typename std::decay_t<U>::value_type, T>;
 
 template <class T, std::convertible_to<T> U>
 void concat(std::vector<T>& dest, U&& item)
@@ -34,7 +40,10 @@ void concat(std::vector<T>& dest, U&& container)
 
 template <class T> void concat_many(std::vector<T>&) {}
 
-template <class T, class Y, class... Ts>
+template <
+  class T,
+  can_be_concatenated_to_vector<T> Y,
+  can_be_concatenated_to_vector<T>... Ts>
 void concat_many(std::vector<T>& dest, Y&& source, Ts&&... tail)
 {
   concat(dest, std::forward<Y>(source));
@@ -86,6 +95,13 @@ template <class T, class Tuple> std::vector<T> tuple_to_vector(Tuple&& tuple)
       return std::vector<T>{std::forward<K>(elems)...};
     },
     std::forward<Tuple>(tuple));
+}
+
+template <class T, class F> auto map_vector(const std::vector<T>& v, F&& f)
+{
+  std::vector<std::decay_t<std::invoke_result_t<F, T>>> output;
+  for (const auto& item : v) { output.push_back(f(item)); }
+  return output;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

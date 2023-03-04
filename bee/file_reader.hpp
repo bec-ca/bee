@@ -1,8 +1,9 @@
 #pragma once
 
-#include "error.hpp"
-
 #include "reader.hpp"
+
+#include "error.hpp"
+#include "file_path.hpp"
 
 #include <memory>
 #include <vector>
@@ -15,11 +16,11 @@ struct FileReader final : public Reader {
  public:
   using ptr = std::unique_ptr<FileReader>;
 
-  static OrError<ptr> open(const std::string& filename);
+  static OrError<ptr> open(const FilePath& filename);
 
-  static OrError<std::string> read_file(const std::string& filename);
+  static OrError<std::string> read_file(const FilePath& filename);
   static OrError<std::vector<std::byte>> read_file_bytes(
-    const std::string& filename);
+    const FilePath& filename);
 
   FileReader(const FileReader&) = delete;
   FileReader(FileReader&& other) = delete;

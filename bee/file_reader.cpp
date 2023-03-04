@@ -32,9 +32,9 @@ void append_bytes(T& output, const std::byte* begin, const std::byte* end)
 // FileReader
 //
 
-OrError<FileReader::ptr> FileReader::open(const string& filename)
+OrError<FileReader::ptr> FileReader::open(const FilePath& filename)
 {
-  bail(fd, FileDescriptor::open_file(filename));
+  bail(fd, FileDescriptor::open_file(filename.to_std_path()));
 
   return ptr(new FileReader(std::move(fd)));
 }
@@ -186,13 +186,13 @@ bool FileReader::_maybe_read_more()
   return true;
 }
 
-OrError<string> FileReader::read_file(const string& filename)
+OrError<string> FileReader::read_file(const FilePath& filename)
 {
   bail(reader, FileReader::open(filename));
   return reader->read_all();
 }
 
-OrError<vector<std::byte>> FileReader::read_file_bytes(const string& filename)
+OrError<vector<std::byte>> FileReader::read_file_bytes(const FilePath& filename)
 {
   bail(reader, FileReader::open(filename));
   return reader->read_all_bytes();
