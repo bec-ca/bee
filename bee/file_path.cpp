@@ -10,6 +10,15 @@ FilePath::~FilePath() {}
 FilePath FilePath::of_string(const std::string& path) { return FilePath(path); }
 FilePath FilePath::of_std_path(const fs::path& path) { return FilePath(path); }
 
+FilePath FilePath::of_string(std::string&& path)
+{
+  return FilePath(std::move(path));
+}
+FilePath FilePath::of_std_path(fs::path&& path)
+{
+  return FilePath(std::move(path));
+}
+
 std::string FilePath::to_string() const { return _path.string(); }
 const fs::path& FilePath::to_std_path() const { return _path; }
 

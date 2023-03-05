@@ -11,6 +11,8 @@ namespace bee {
 struct Time {
  public:
   static Time of_nanos_since_epoch(int64_t ts_nanos);
+  static Time of_span_since_epoch(const Span& span);
+  static Time epoch();
 
   Time();
 

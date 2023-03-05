@@ -8,6 +8,7 @@
 #include "string_util.hpp"
 #include "testing.hpp"
 
+#include <chrono>
 #include <filesystem>
 #include <random>
 
@@ -40,6 +41,8 @@ TEST(mkdir)
   for (const auto& file : files) {
     print_line("File: $", remove_path_prefix(file, tmp_dir));
   }
+
+  fs::remove_all(tmp_dir.to_std_path());
 }
 
 TEST(list_files)
@@ -74,6 +77,21 @@ TEST(list_files)
     sort(files);
     for (const auto& file : files) { print_line("File: $", file); }
   }
+
+  fs::remove_all(tmp_dir.to_std_path());
+}
+
+TEST(mtime)
+{
+  auto tmp_dir = create_tmp_dir();
+  auto file_name = tmp_dir / "file.txt";
+
+  must_unit(FileSystem::touch_file(file_name));
+
+  must(mtime, FileSystem::file_mtime(file_name));
+  print_line(mtime > Time::epoch());
+
+  fs::remove_all(tmp_dir.to_std_path());
 }
 
 } // namespace

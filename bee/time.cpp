@@ -27,6 +27,13 @@ Time::Time() : Time(0) {}
 
 Time Time::of_nanos_since_epoch(int64_t ts_nanos) { return Time(ts_nanos); }
 
+Time Time::of_span_since_epoch(const Span& span)
+{
+  return Time(span.to_nanos());
+}
+
+Time Time::epoch() { return Time(0); }
+
 bool Time::operator==(Time other) const { return _ts_nanos == other._ts_nanos; }
 bool Time::operator!=(Time other) const { return _ts_nanos != other._ts_nanos; }
 bool Time::operator<(Time other) const { return _ts_nanos < other._ts_nanos; }

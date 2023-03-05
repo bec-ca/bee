@@ -9,6 +9,7 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <ratio>
 
 using std::error_code;
 using std::istream;
@@ -91,15 +92,16 @@ OrError<size_t> FileSystem::file_size(const FilePath& filename)
 OrError<Time> FileSystem::file_mtime(const FilePath& filename)
 {
   error_code ec;
-  auto mtime = fs::last_write_time(filename.to_std_path(), ec);
+  auto mtime = std::chrono::file_clock::to_sys(
+                 fs::last_write_time(filename.to_std_path(), ec))
+                 .time_since_epoch();
   if (ec) {
     return Error::format(
       "Failed to check file mtime '$': $", filename, ec.message());
   }
-  return Time::of_nanos_since_epoch(
-    std::chrono::duration_cast<std::chrono::nanoseconds>(
-      mtime.time_since_epoch())
-      .count());
+
+  auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(mtime);
+  return Time::of_span_since_epoch(Span::of_nanos(duration.count()));
 }
 
 bool FileSystem::exists(const FilePath& filename)
