@@ -1,0 +1,11 @@
+on:
+  push
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Run tests
+        run: ./ci.sh
+        shell: bash
