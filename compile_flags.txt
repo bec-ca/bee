@@ -6,3 +6,5 @@
 -I/usr/include/SDL2
 -iquote
 .
+-iquote
+build/external-packages
