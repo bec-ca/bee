@@ -27,7 +27,7 @@ const timespec& timespec_mtime(const stat_t& s) { return s.st_mtim; }
 
 Time time_of_timespec(const timespec& ts)
 {
-  return Time::of_timestamp_nanos(ts.tv_nsec + ts.tv_sec * 1000000000ll);
+  return Time::of_nanos_since_epoch(ts.tv_nsec + ts.tv_sec * 1000000000ll);
 }
 
 } // namespace
