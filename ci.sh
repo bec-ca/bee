@@ -2,5 +2,5 @@
 
 for file in bee/*.cpp; do
   echo "Compiling $file..."
-  clang++ -c -std=c++20 -iquote . $file
+  clang++ -c $(cat compile_flags.txt) $file
 done
