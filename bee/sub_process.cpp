@@ -97,8 +97,8 @@ OrError<Pipe> prep_output_spec(const SubProcess::output_spec_type& spec)
           .read_fd = nullptr,
           .write_fd = nullptr,
         };
-      } else if constexpr (std::is_same_v<T, SubProcess::Filename>) {
-        auto& filename = output_spec.filename;
+      } else if constexpr (std::is_same_v<T, FilePath>) {
+        auto& filename = output_spec;
         bail(file, FileDescriptor::create_file(filename));
         return Pipe{
           .read_fd = nullptr,
@@ -128,9 +128,9 @@ OrError<Pipe> prep_input_spec(const SubProcess::input_spec_type& spec)
           .read_fd = nullptr,
           .write_fd = nullptr,
         };
-      } else if constexpr (std::is_same_v<T, SubProcess::Filename>) {
-        auto& filename = input_spec.filename;
-        bail(file, FileDescriptor::open_file(filename.data()));
+      } else if constexpr (std::is_same_v<T, FilePath>) {
+        auto& filename = input_spec;
+        bail(file, FileDescriptor::open_file(filename));
         return Pipe{
           .read_fd = std::move(file).to_shared(),
           .write_fd = nullptr,
@@ -302,7 +302,9 @@ OrError<SubProcess::ptr> SubProcess::spawn(
 
     if (getppid() == 1) { exit(1); }
 
-    if (args.cwd.has_value()) { std::filesystem::current_path(*args.cwd); }
+    if (args.cwd.has_value()) {
+      std::filesystem::current_path(args.cwd->to_std_path());
+    }
 
     must_unit(
       prep_output_on_child(stdout_fd_pair, FileDescriptor::stdout_filedesc()));

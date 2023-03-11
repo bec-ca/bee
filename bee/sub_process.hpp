@@ -2,6 +2,7 @@
 
 #include "error.hpp"
 #include "file_descriptor.hpp"
+#include "file_path.hpp"
 #include "time.hpp"
 
 #include <optional>
@@ -26,10 +27,6 @@ struct SubProcess {
 
    protected:
     FileDescriptor::shared_ptr _fd;
-  };
-
-  struct Filename {
-    std::string filename;
   };
 
   struct DefaultIO {};
@@ -63,9 +60,9 @@ struct SubProcess {
   };
 
   using output_spec_type =
-    std::variant<DefaultIO, Pipe::ptr, Filename, OutputToString::ptr>;
+    std::variant<DefaultIO, Pipe::ptr, FilePath, OutputToString::ptr>;
 
-  using input_spec_type = std::variant<DefaultIO, Pipe::ptr, Filename>;
+  using input_spec_type = std::variant<DefaultIO, Pipe::ptr, FilePath>;
 
   struct CreateProcessArgs {
     const std::string cmd;
@@ -73,7 +70,7 @@ struct SubProcess {
     input_spec_type stdin_spec = DefaultIO{};
     output_spec_type stdout_spec = DefaultIO{};
     output_spec_type stderr_spec = DefaultIO{};
-    const std::optional<std::string> cwd = std::nullopt;
+    const std::optional<FilePath> cwd = std::nullopt;
   };
 
   using ptr = std::shared_ptr<SubProcess>;

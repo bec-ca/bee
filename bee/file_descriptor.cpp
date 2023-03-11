@@ -80,7 +80,7 @@ FileDescriptor::FileDescriptor(FileDescriptor&& other)
 
 FileDescriptor::~FileDescriptor() { close(); }
 
-OrError<FileDescriptor> FileDescriptor::create_file(const string& filename)
+OrError<FileDescriptor> FileDescriptor::create_file(const FilePath& filename)
 {
   bail_syscall(
     fd,
@@ -90,7 +90,7 @@ OrError<FileDescriptor> FileDescriptor::create_file(const string& filename)
   return FileDescriptor(fd);
 }
 
-OrError<FileDescriptor> FileDescriptor::open_file(const string& filename)
+OrError<FileDescriptor> FileDescriptor::open_file(const FilePath& filename)
 {
   bail_syscall(
     fd,

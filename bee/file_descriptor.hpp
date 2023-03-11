@@ -2,6 +2,7 @@
 
 #include "data_buffer.hpp"
 #include "error.hpp"
+#include "file_path.hpp"
 
 #include <memory>
 
@@ -39,9 +40,8 @@ struct FileDescriptor {
   FileDescriptor& operator=(const FileDescriptor& other) = delete;
   FileDescriptor& operator=(FileDescriptor&&) = delete;
 
-  static OrError<FileDescriptor> create_file(const std::string& filename);
-
-  static OrError<FileDescriptor> open_file(const std::string& filename);
+  static OrError<FileDescriptor> create_file(const FilePath& filename);
+  static OrError<FileDescriptor> open_file(const FilePath& filename);
 
   bool close();
   bool is_closed();

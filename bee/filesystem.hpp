@@ -7,6 +7,7 @@
 
 #include <filesystem>
 #include <istream>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -19,12 +20,19 @@ struct DirectoryContent {
   std::vector<FilePath> directories;
 };
 
+struct ListDirOptions {
+  bool recursive = false;
+  bool relative_path = false;
+  std::set<std::string> exclude = {};
+};
+
 struct FileSystem {
   static std::string read_stream(std::istream& stream);
 
   static OrError<Unit> mkdirs(const FilePath& path);
 
   static OrError<Unit> remove(const FilePath& path);
+  static OrError<Unit> remove_all(const FilePath& path);
 
   static OrError<Unit> touch_file(const FilePath& filename);
 
@@ -37,7 +45,7 @@ struct FileSystem {
   static bool exists(const FilePath& filename);
 
   static OrError<std::vector<FilePath>> list_regular_files(
-    const FilePath& dir, bool recursive = false);
+    const FilePath& dir, const ListDirOptions& opt = {});
 
   static OrError<DirectoryContent> list_dir(const FilePath& dir);
 };

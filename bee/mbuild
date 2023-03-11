@@ -12,7 +12,6 @@ cpp_library:
   sources: binary_format.cpp
   headers: binary_format.hpp
   libs:
-    /bee/data_buffer
     data_buffer
     error
 
@@ -32,7 +31,7 @@ cpp_library:
   name: data_buffer
   sources: data_buffer.cpp
   headers: data_buffer.hpp
-  libs: /bee/util
+  libs: util
 
 cpp_test:
   name: data_buffer_test
@@ -67,6 +66,7 @@ cpp_library:
   libs:
     data_buffer
     error
+    file_path
 
 cpp_library:
   name: file_path
@@ -108,13 +108,13 @@ cpp_library:
   sources: filesystem.cpp
   headers: filesystem.hpp
   libs:
-    /bee/file_path
     error
     file_path
     file_reader
     file_writer
     format_filesystem
     time
+    util
 
 cpp_test:
   name: filesystem_test
@@ -125,6 +125,7 @@ cpp_test:
     format
     format_filesystem
     format_vector
+    sort
     string_util
     testing
   output: filesystem_test.out
@@ -212,7 +213,7 @@ cpp_library:
   name: reader
   sources: reader.cpp
   headers: reader.hpp
-  libs: /bee/error
+  libs: error
 
 cpp_library:
   name: ref
@@ -290,6 +291,7 @@ cpp_library:
   libs:
     error
     file_descriptor
+    file_path
     format
     string_util
     time
@@ -356,5 +358,5 @@ cpp_library:
   name: writer
   sources: writer.cpp
   headers: writer.hpp
-  libs: /bee/error
+  libs: error
 

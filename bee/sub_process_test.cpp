@@ -15,7 +15,8 @@ TEST(run_proc)
   log();
   must_unit(SubProcess::run({.cmd = "/bin/echo", .args = {"hello"}}));
   log();
-  must_unit(SubProcess::run({.cmd = "pwd", .cwd = "/usr/bin"}));
+  must_unit(
+    SubProcess::run({.cmd = "pwd", .cwd = FilePath::of_string("/usr/bin")}));
   log();
 }
 

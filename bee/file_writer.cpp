@@ -31,7 +31,7 @@ OrError<Unit> write_to_fd(
 
 OrError<FileWriter::ptr> FileWriter::create(const FilePath& filename)
 {
-  bail(fd, FileDescriptor::create_file(filename.to_std_path()));
+  bail(fd, FileDescriptor::create_file(filename));
   return ptr(new FileWriter(std::move(fd)));
 }
 

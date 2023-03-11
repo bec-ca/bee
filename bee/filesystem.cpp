@@ -9,6 +9,7 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <queue>
 #include <ratio>
 
 using std::error_code;
@@ -18,6 +19,44 @@ using std::string;
 using std::vector;
 
 namespace bee {
+
+namespace {
+
+OrError<vector<FilePath>> list_regular_files_impl(
+  const FilePath& base_dir, const ListDirOptions& opts)
+{
+  vector<FilePath> output;
+  std::queue<FilePath> queue;
+  queue.push(FilePath::of_string(""));
+  while (!queue.empty()) {
+    auto dir = queue.front();
+    queue.pop();
+    error_code ec;
+    for (const auto& p :
+         fs::directory_iterator((base_dir / dir).to_std_path(), ec)) {
+      auto path = FilePath::of_std_path(p.path());
+      auto filename = path.filename();
+      auto rel_path = dir / filename;
+      if (opts.exclude.contains(filename)) { continue; }
+      if (p.is_directory()) {
+        if (opts.recursive) { queue.push(rel_path); }
+      } else if (p.is_regular_file()) {
+        if (opts.relative_path) {
+          output.push_back(rel_path);
+        } else {
+          output.push_back(path);
+        }
+      }
+    }
+    if (ec) {
+      return Error::format(
+        "Failed to list directory '$': $", dir, ec.message());
+    }
+  }
+  return output;
+}
+
+} // namespace
 
 string FileSystem::read_stream(istream& stream)
 {
@@ -49,7 +88,7 @@ OrError<Unit> FileSystem::remove(const FilePath& path)
   error_code ec;
   fs::remove(path.to_std_path(), ec);
   if (ec) {
-    return Error::format("Failed to cremove file '$': $", path, ec.message());
+    return Error::format("Failed to remove file '$': $", path, ec.message());
   }
   return unit;
 }
@@ -72,7 +111,8 @@ OrError<Unit> FileSystem::copy(const FilePath& from, const FilePath& to)
     fs::copy_options::overwrite_existing,
     ec);
   if (ec) {
-    return Error::format("Failed to copy file: $", ec.message());
+    return Error::format(
+      "Failed to copy file '$' to '$': $", from, to, ec.message());
   } else {
     return unit;
   }
@@ -110,25 +150,9 @@ bool FileSystem::exists(const FilePath& filename)
 }
 
 OrError<vector<FilePath>> FileSystem::list_regular_files(
-  const FilePath& dir, bool recursive)
+  const FilePath& base_dir, const ListDirOptions& opts)
 {
-  error_code ec;
-  vector<FilePath> output;
-  for (const auto& p : fs::directory_iterator(dir.to_std_path(), ec)) {
-    auto path = FilePath::of_std_path(p.path());
-    if (p.is_directory()) {
-      if (recursive) {
-        bail(sub_files, list_regular_files(path, true));
-        concat(output, sub_files);
-      }
-    } else if (p.is_regular_file()) {
-      output.push_back(path);
-    }
-  }
-  if (ec) {
-    return Error::format("Failed to list directory '$': $", dir, ec.message());
-  }
-  return output;
+  return list_regular_files_impl(base_dir, opts);
 }
 
 OrError<DirectoryContent> FileSystem::list_dir(const FilePath& dir)

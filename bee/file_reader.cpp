@@ -34,7 +34,7 @@ void append_bytes(T& output, const std::byte* begin, const std::byte* end)
 
 OrError<FileReader::ptr> FileReader::open(const FilePath& filename)
 {
-  bail(fd, FileDescriptor::open_file(filename.to_std_path()));
+  bail(fd, FileDescriptor::open_file(filename));
 
   return ptr(new FileReader(std::move(fd)));
 }

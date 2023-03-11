@@ -63,7 +63,7 @@ TEST(list_files)
   must_unit(FileSystem::touch_file(tmp_dir / "file4.txt"));
 
   {
-    must(files, FileSystem::list_regular_files(tmp_dir, true));
+    must(files, FileSystem::list_regular_files(tmp_dir, {.recursive = true}));
     sort(files);
     for (const auto& file : files) {
       print_line("File: $", remove_path_prefix(file, tmp_dir));
@@ -73,7 +73,9 @@ TEST(list_files)
   {
     fs::current_path(tmp_dir.to_std_path());
     must(
-      files, FileSystem::list_regular_files(FilePath::of_string("./"), true));
+      files,
+      FileSystem::list_regular_files(
+        FilePath::of_string("./"), {.recursive = true}));
     sort(files);
     for (const auto& file : files) { print_line("File: $", file); }
   }
