@@ -19,8 +19,12 @@ template <> struct to_string<unsigned int> {
   }
 };
 
-template <> struct to_string<short unsigned int> {
-  static std::string convert(short unsigned int value)
+template <> struct to_string<short> {
+  static std::string convert(short value) { return std::to_string(value); }
+};
+
+template <> struct to_string<unsigned short> {
+  static std::string convert(unsigned short value)
   {
     return std::to_string(value);
   }
@@ -30,15 +34,15 @@ template <> struct to_string<long> {
   static std::string convert(long value) { return std::to_string(value); }
 };
 
-template <> struct to_string<long long> {
-  static std::string convert(long long value) { return std::to_string(value); }
-};
-
 template <> struct to_string<unsigned long> {
   static std::string convert(unsigned long value)
   {
     return std::to_string(value);
   }
+};
+
+template <> struct to_string<long long> {
+  static std::string convert(long long value) { return std::to_string(value); }
 };
 
 template <> struct to_string<unsigned long long> {

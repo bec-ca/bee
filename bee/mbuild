@@ -137,6 +137,11 @@ cpp_library:
   libs: to_string
 
 cpp_library:
+  name: format_array
+  headers: format_array.hpp
+  libs: to_string
+
+cpp_library:
   name: format_filesystem
   headers: format_filesystem.hpp
   libs: to_string
