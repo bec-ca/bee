@@ -1,14 +1,13 @@
 #pragma once
 
-#include "error.hpp"
-
 #include <algorithm>
-#include <concepts>
 #include <set>
 #include <string>
 #include <tuple>
 #include <type_traits>
 #include <vector>
+
+#include "error.hpp"
 
 namespace bee {
 
@@ -169,40 +168,5 @@ template <class T> rev_it_t<T> rev_it(T& container)
 {
   return rev_it_t(container);
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// Misc
-//
-
-template <class> constexpr bool always_false_v = false;
-
-// template <class T> void sort_c(T& cont) { std::sort(cont.begin(),
-// cont.end()); }
-
-// template <class T, class F> void sort_c(T& cont, const F& compare)
-// {
-//   std::sort(cont.begin(), cont.end(), compare);
-// }
-
-template <typename... Us> struct is_one_of;
-
-template <typename T, typename U, typename... Us>
-struct is_one_of<T, U, Us...> {
- private:
-  constexpr static bool _value()
-  {
-    if constexpr (std::is_same_v<T, U>)
-      return true;
-    else if constexpr ((sizeof...(Us)) > 0)
-      return is_one_of<T, Us...>::value;
-    else
-      return false;
-  }
-
- public:
-  constexpr static bool value = _value();
-};
-
-template <typename... Us> constexpr bool is_one_of_v = is_one_of<Us...>::value;
 
 } // namespace bee

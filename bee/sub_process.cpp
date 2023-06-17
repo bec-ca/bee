@@ -1,23 +1,24 @@
 #include "sub_process.hpp"
 
-#include "file_descriptor.hpp"
-#include "format.hpp"
-#include "string_util.hpp"
-#include "util.hpp"
-
 #include <cerrno>
 #include <csignal>
 #include <cstring>
-#include <fcntl.h>
 #include <filesystem>
 #include <future>
 #include <map>
 #include <mutex>
+#include <thread>
+
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <thread>
 #include <unistd.h>
+
+#include "fd.hpp"
+#include "format.hpp"
+#include "string_util.hpp"
+#include "util.hpp"
 
 #ifndef __APPLE__
 #include <sys/prctl.h>
@@ -40,7 +41,7 @@ struct OutputToStringImpl : public SubProcess::OutputToString {
     _maybe_join();
   }
 
-  virtual void set_fd(const FileDescriptor::shared_ptr& fd) override
+  virtual void set_fd(const FD::shared_ptr& fd) override
   {
     _fd = fd;
     promise<OrError<string>> prom;
@@ -63,8 +64,7 @@ struct OutputToStringImpl : public SubProcess::OutputToString {
     }
   }
 
-  static void _reader_thread(
-    promise<OrError<string>> prom, FileDescriptor::shared_ptr fd)
+  static void _reader_thread(promise<OrError<string>> prom, FD::shared_ptr fd)
   {
     auto fn = [&fd]() -> OrError<string> {
       DataBuffer buffer;
@@ -81,7 +81,7 @@ struct OutputToStringImpl : public SubProcess::OutputToString {
 
   std::optional<thread> _thread;
 
-  FileDescriptor::shared_ptr _fd;
+  FD::shared_ptr _fd;
 };
 
 OrError<Pipe> sys_pipe() { return Pipe::create(); }
@@ -99,7 +99,7 @@ OrError<Pipe> prep_output_spec(const SubProcess::output_spec_type& spec)
         };
       } else if constexpr (std::is_same_v<T, FilePath>) {
         auto& filename = output_spec;
-        bail(file, FileDescriptor::create_file(filename));
+        bail(file, FD::create_file(filename));
         return Pipe{
           .read_fd = nullptr,
           .write_fd = std::move(file).to_shared(),
@@ -130,7 +130,7 @@ OrError<Pipe> prep_input_spec(const SubProcess::input_spec_type& spec)
         };
       } else if constexpr (std::is_same_v<T, FilePath>) {
         auto& filename = input_spec;
-        bail(file, FileDescriptor::open_file(filename));
+        bail(file, FD::open_file(filename));
         return Pipe{
           .read_fd = std::move(file).to_shared(),
           .write_fd = nullptr,
@@ -146,22 +146,20 @@ OrError<Pipe> prep_input_spec(const SubProcess::input_spec_type& spec)
     spec);
 }
 
-OrError<Unit> prep_output_on_child(
-  Pipe& output, const FileDescriptor::shared_ptr& child_fd)
+OrError<> prep_output_on_child(Pipe& output, const FD::shared_ptr& child_fd)
 {
   if (output.write_fd != nullptr) {
     bail_unit(output.write_fd->dup_onto(*child_fd));
   }
-  return unit;
+  return ok();
 }
 
-OrError<Unit> prep_input_on_child(
-  Pipe& input, const FileDescriptor::shared_ptr& child_fd)
+OrError<> prep_input_on_child(Pipe& input, const FD::shared_ptr& child_fd)
 {
   if (input.read_fd != nullptr) {
     bail_unit(input.read_fd->dup_onto(*child_fd));
   }
-  return unit;
+  return ok();
 }
 
 struct RunningProcesses {
@@ -179,7 +177,7 @@ struct RunningProcesses {
     const std::lock_guard<std::mutex> lock(_mutex);
     auto& m = _running_processes;
     auto it = m.find(pid);
-    if (it == m.end()) { return Error::format("No such pid: $", pid.to_int()); }
+    if (it == m.end()) { return Error::fmt("No such pid: $", pid.to_int()); }
     return it->second;
   }
 
@@ -223,12 +221,9 @@ SubProcess::Pipe::Pipe() : _fd(nullptr) {}
 
 SubProcess::Pipe::~Pipe() {}
 
-void SubProcess::Pipe::set_fd(const FileDescriptor::shared_ptr& fd)
-{
-  _fd = fd;
-}
+void SubProcess::Pipe::set_fd(const FD::shared_ptr& fd) { _fd = fd; }
 
-const FileDescriptor::shared_ptr& SubProcess::Pipe::fd() const { return _fd; }
+const FD::shared_ptr& SubProcess::Pipe::fd() const { return _fd; }
 
 SubProcess::Pipe::ptr SubProcess::Pipe::create()
 {
@@ -261,11 +256,11 @@ bool SubProcess::Pid::operator<(const Pid& other) const
   return _pid < other._pid;
 }
 
-OrError<Unit> SubProcess::Pid::kill()
+OrError<> SubProcess::Pid::kill()
 {
   if (::kill(_pid, SIGKILL) == 0) { return ok(); }
 
-  return Error::format("Failed to send sigkill to process: $", strerror(errno));
+  return Error::fmt("Failed to send sigkill to process: $", strerror(errno));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -280,7 +275,7 @@ OrError<SubProcess::ptr> SubProcess::spawn(
   const SubProcess::CreateProcessArgs& args)
 {
   std::vector<const char*> cargs;
-  cargs.push_back(args.cmd.c_str());
+  cargs.push_back(args.cmd.data());
   for (const auto& arg : args.args) { cargs.push_back(arg.c_str()); }
   cargs.push_back(nullptr);
 
@@ -306,16 +301,13 @@ OrError<SubProcess::ptr> SubProcess::spawn(
       std::filesystem::current_path(args.cwd->to_std_path());
     }
 
-    must_unit(
-      prep_output_on_child(stdout_fd_pair, FileDescriptor::stdout_filedesc()));
-    must_unit(
-      prep_output_on_child(stderr_fd_pair, FileDescriptor::stderr_filedesc()));
-    must_unit(
-      prep_input_on_child(stdin_fd_pair, FileDescriptor::stdin_filedesc()));
+    must_unit(prep_output_on_child(stdout_fd_pair, FD::stdout_filedesc()));
+    must_unit(prep_output_on_child(stderr_fd_pair, FD::stderr_filedesc()));
+    must_unit(prep_input_on_child(stdin_fd_pair, FD::stdin_filedesc()));
 
     char* const* ccargs = const_cast<char* const*>(cargs.data());
-    int ret = execvp(args.cmd.c_str(), ccargs);
-    print_err_line(
+    int ret = execvp(args.cmd.data(), ccargs);
+    PE(
       "Command failed with code ret:$ errno:$ message:'$' cmd:'$' '$'",
       ret,
       errno,
@@ -324,13 +316,13 @@ OrError<SubProcess::ptr> SubProcess::spawn(
       join(args.args, " "));
     exit(1);
   } else if (pid == -1) {
-    return Error::format("Failed to fork process: $", strerror(errno));
+    return Error::fmt("Failed to fork process: $", strerror(errno));
   }
 
   return RunningProcesses::singleton().create_process(Pid::of_int(pid));
 }
 
-OrError<Unit> SubProcess::run(const SubProcess::CreateProcessArgs& args)
+OrError<> SubProcess::run(const SubProcess::CreateProcessArgs& args)
 {
   bail(proc, spawn(args));
   return proc->wait();
@@ -347,7 +339,7 @@ OrError<std::optional<SubProcess::ProcessStatus>> SubProcess::wait_any(
     return std::nullopt;
   } else if (int_pid == -1) {
     if (errno == ECHILD) { return std::nullopt; }
-    return Error::format("Failed to wait for process: $", strerror(errno));
+    return Error::fmt("Failed to wait for process: $", strerror(errno));
   }
   int exit_status = WEXITSTATUS(wstatus);
   auto pid = Pid::of_int(int_pid);
@@ -358,40 +350,40 @@ OrError<std::optional<SubProcess::ProcessStatus>> SubProcess::wait_any(
   return SubProcess::ProcessStatus{.proc = proc, .exit_status = exit_status};
 }
 
-OrError<Unit> SubProcess::wait()
+OrError<> SubProcess::wait()
 {
   int wstatus = 0;
   auto ret = waitpid(_pid.to_int(), &wstatus, 0);
   if (ret == 0) {
-    return Error::format("waipid unexpectedly returned 0");
+    return Error::fmt("waipid unexpectedly returned 0");
   } else if (ret < 0) {
-    return Error::format("waipid returned error: $", strerror(errno));
+    return Error::fmt("waipid returned error: $", strerror(errno));
   } else if (ret != _pid.to_int()) {
-    return Error::format(
+    return Error::fmt(
       "waipid returned a value different than the expected pid");
   }
   RunningProcesses::singleton().process_ended(_pid);
   if (WIFEXITED(wstatus)) {
     int exit_status = WEXITSTATUS(wstatus);
     if (exit_status != 0) {
-      return Error::format("Process exited with status $", exit_status);
+      return Error::fmt("Process exited with status $", exit_status);
     } else {
-      return unit;
+      return ok();
     }
   } else if (WIFSIGNALED(wstatus)) {
-    return Error::format(
+    return Error::fmt(
       "Process killed by signal $", strsignal(WTERMSIG(wstatus)));
   } else if (WIFSTOPPED(wstatus)) {
-    return Error::format(
+    return Error::fmt(
       "Process stopped by signal $", strsignal(WSTOPSIG(wstatus)));
   } else if (WIFCONTINUED(wstatus)) {
-    return Error::format("Process continued");
+    return Error::fmt("Process continued");
   } else {
-    return Error::format("Process ended abnormally with wstatus $", wstatus);
+    return Error::fmt("Process ended abnormally with wstatus $", wstatus);
   }
 }
 
-OrError<Unit> SubProcess::kill() { return _pid.kill(); }
+OrError<> SubProcess::kill() { return _pid.kill(); }
 
 const SubProcess::Pid& SubProcess::pid() const { return _pid; }
 

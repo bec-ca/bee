@@ -1,9 +1,9 @@
 #pragma once
 
+#include <functional>
+
 #include "span.hpp"
 #include "time.hpp"
-
-#include <functional>
 
 namespace bee {
 

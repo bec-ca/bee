@@ -1,5 +1,7 @@
 #include "error.hpp"
 
+#include <stdexcept>
+
 #include "format.hpp"
 
 namespace bee {
@@ -24,6 +26,10 @@ Error::Error(const char* msg)
 
 Error::Error(string&& msg)
     : _messages({{.message = std::move(msg), .location = nullopt}})
+{}
+
+Error::Error(const std::exception& exception)
+    : _messages({{.message = exception.what(), .location = nullopt}})
 {}
 
 Error::Error(const char* filename, int line, const string& msg)
@@ -66,25 +72,20 @@ string Error::full_msg() const
   string out;
   for (const auto& msg : _messages) {
     if (msg.location.has_value()) {
-      out += bee::format(
-        "$:$:$\n", msg.location->filename, msg.location->line, msg.message);
+      out +=
+        F("$:$:$\n", msg.location->filename, msg.location->line, msg.message);
     } else {
-      out += bee::format(":$\n", msg.message);
+      out += F("$\n", msg.message);
     }
   }
   return out;
 }
 
-void Error::print_error() const { print_err_line(full_msg()); }
+void Error::print_error() const { PE(full_msg()); }
 
 const deque<ErrorMessage>& Error::messages() const { return _messages; }
 
-void Error::crash() const
-{
-  print_err_line("Unhandled error:");
-  print_err_line(full_msg());
-  abort();
-}
+void Error::raise() const { throw(std::runtime_error(full_msg())); }
 
 void Error::add_tag(string&& msg)
 {

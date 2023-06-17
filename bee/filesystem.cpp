@@ -1,16 +1,16 @@
 #include "filesystem.hpp"
 
-#include "bee/file_path.hpp"
-#include "file_reader.hpp"
-#include "file_writer.hpp"
-#include "format_filesystem.hpp"
-#include "util.hpp"
-
 #include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <queue>
 #include <ratio>
+
+#include "file_path.hpp"
+#include "file_reader.hpp"
+#include "file_writer.hpp"
+#include "format_filesystem.hpp"
+#include "util.hpp"
 
 using std::error_code;
 using std::istream;
@@ -19,7 +19,6 @@ using std::string;
 using std::vector;
 
 namespace bee {
-
 namespace {
 
 OrError<vector<FilePath>> list_regular_files_impl(
@@ -49,8 +48,7 @@ OrError<vector<FilePath>> list_regular_files_impl(
       }
     }
     if (ec) {
-      return Error::format(
-        "Failed to list directory '$': $", dir, ec.message());
+      return Error::fmt("Failed to list directory '$': $", dir, ec.message());
     }
   }
   return output;
@@ -72,37 +70,34 @@ string FileSystem::read_stream(istream& stream)
   return contents;
 }
 
-OrError<Unit> FileSystem::mkdirs(const FilePath& path)
+OrError<> FileSystem::mkdirs(const FilePath& path)
 {
   error_code ec;
   fs::create_directories(path.to_std_path(), ec);
   if (ec) {
-    return Error::format(
-      "Failed to create directory '$': $", path, ec.message());
+    return Error::fmt("Failed to create directory '$': $", path, ec.message());
   }
-  return unit;
+  return ok();
 }
 
-OrError<Unit> FileSystem::remove(const FilePath& path)
+OrError<> FileSystem::remove(const FilePath& path)
 {
   error_code ec;
   fs::remove(path.to_std_path(), ec);
   if (ec) {
-    return Error::format("Failed to remove file '$': $", path, ec.message());
+    return Error::fmt("Failed to remove file '$': $", path, ec.message());
   }
-  return unit;
+  return ok();
 }
 
-OrError<Unit> FileSystem::touch_file(const FilePath& filename)
+OrError<> FileSystem::touch_file(const FilePath& filename)
 {
   ofstream output(filename.to_std_path());
-  if (!output.good()) {
-    return Error::format("Failed to touch file $", filename);
-  }
-  return unit;
+  if (!output.good()) { return Error::fmt("Failed to touch file $", filename); }
+  return ok();
 }
 
-OrError<Unit> FileSystem::copy(const FilePath& from, const FilePath& to)
+OrError<> FileSystem::copy(const FilePath& from, const FilePath& to)
 {
   error_code ec;
   fs::copy(
@@ -111,10 +106,10 @@ OrError<Unit> FileSystem::copy(const FilePath& from, const FilePath& to)
     fs::copy_options::overwrite_existing,
     ec);
   if (ec) {
-    return Error::format(
+    return Error::fmt(
       "Failed to copy file '$' to '$': $", from, to, ec.message());
   } else {
-    return unit;
+    return ok();
   }
 }
 
@@ -123,7 +118,7 @@ OrError<size_t> FileSystem::file_size(const FilePath& filename)
   error_code ec;
   auto size = fs::file_size(filename.to_std_path(), ec);
   if (ec) {
-    return Error::format(
+    return Error::fmt(
       "Failed to check file size '$': $", filename, ec.message());
   }
   return size;
@@ -136,7 +131,7 @@ OrError<Time> FileSystem::file_mtime(const FilePath& filename)
                  fs::last_write_time(filename.to_std_path(), ec))
                  .time_since_epoch();
   if (ec) {
-    return Error::format(
+    return Error::fmt(
       "Failed to check file mtime '$': $", filename, ec.message());
   }
 
@@ -168,7 +163,7 @@ OrError<DirectoryContent> FileSystem::list_dir(const FilePath& dir)
     }
   }
   if (ec) {
-    return Error::format("Failed to list directory '$': $", dir, ec.message());
+    return Error::fmt("Failed to list directory '$': $", dir, ec.message());
   }
   return output;
 }

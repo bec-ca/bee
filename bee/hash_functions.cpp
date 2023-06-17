@@ -1,4 +1,5 @@
 #include "hash_functions.hpp"
+
 #include <cstdint>
 
 namespace bee {

@@ -1,10 +1,12 @@
 #pragma once
 
-#include "error.hpp"
-
 #include <chrono>
 #include <cstdint>
 #include <string>
+
+#include "error.hpp"
+
+#include "bee/to_string_t.hpp"
 
 namespace bee {
 
@@ -47,9 +49,12 @@ struct Span {
   Span operator/(int64_t by) const;
   Span operator*(int64_t by) const;
 
+  Span& operator/=(int64_t by);
+  Span& operator*=(int64_t by);
+
   static Span zero();
 
-  std::string to_string() const;
+  std::string to_string(const FormatParams& p) const;
 
   void sleep() const;
 

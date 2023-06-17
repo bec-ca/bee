@@ -21,15 +21,18 @@ int add_to_tests(std::function<void()> f, const std::string& name)
 void run_tests()
 {
   if (tests_singleton().empty()) {
-    print_line("No tests found");
+    P("No tests found");
   } else {
     for (const auto& t : tests_singleton()) {
-      print_line(
-        "=================================================================="
+      P("=================================================================="
         "==============");
-      print_line("Test: $", t.name);
-      t.t();
-      print_line("");
+      P("Test: $", t.name);
+      try {
+        t.t();
+      } catch (const std::exception& exn) {
+        P("Exception raised by test: $", exn.what());
+      }
+      P("");
     }
   }
 }

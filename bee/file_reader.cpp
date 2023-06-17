@@ -1,14 +1,15 @@
 #include "file_reader.hpp"
 
-#include "file_descriptor.hpp"
-
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include "fd.hpp"
 
 using std::string;
 using std::vector;
@@ -34,7 +35,7 @@ void append_bytes(T& output, const std::byte* begin, const std::byte* end)
 
 OrError<FileReader::ptr> FileReader::open(const FilePath& filename)
 {
-  bail(fd, FileDescriptor::open_file(filename));
+  bail(fd, FD::open_file(filename));
 
   return ptr(new FileReader(std::move(fd)));
 }
@@ -62,6 +63,14 @@ OrError<size_t> FileReader::read(std::byte* buffer, size_t size)
   return total_read;
 }
 
+OrError<size_t> FileReader::read(std::vector<std::byte>& buffer, size_t size)
+{
+  buffer.resize(size);
+  bail(bytes_read, read(buffer.data(), size));
+  buffer.resize(bytes_read);
+  return bytes_read;
+}
+
 OrError<string> FileReader::read_str(size_t size)
 {
   string output;
@@ -80,6 +89,8 @@ OrError<string> FileReader::read_line()
     if (c == '\n') {
       found_eol = true;
       break;
+    } else if (c == '\r') {
+      continue;
     }
     output += c;
   }
@@ -135,7 +146,7 @@ OrError<char> FileReader::read_char()
 
 bool FileReader::is_eof() { return !_maybe_read_more(); }
 
-FileReader::FileReader(FileDescriptor&& fd) : _fd(std::move(fd).to_unique()) {}
+FileReader::FileReader(FD&& fd) : _fd(std::move(fd).to_unique()) {}
 
 size_t FileReader::_available_on_buffer() const
 {

@@ -1,8 +1,8 @@
 #include "binary_format.hpp"
 
-#include "bee/data_buffer.hpp"
-
 #include <cstddef>
+
+#include "bee/data_buffer.hpp"
 
 using std::string;
 

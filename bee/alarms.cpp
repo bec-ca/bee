@@ -1,10 +1,10 @@
 #include "alarms.hpp"
 
-#include "queue.hpp"
-#include "time.hpp"
-
 #include <memory>
 #include <queue>
+
+#include "queue.hpp"
+#include "time.hpp"
 
 using std::function;
 using std::make_shared;

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "queue.hpp"
-#include "span.hpp"
-
 #include <functional>
 #include <thread>
+
+#include "queue.hpp"
+#include "span.hpp"
 
 namespace bee {
 

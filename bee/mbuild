@@ -7,6 +7,18 @@ cpp_library:
     span
     time
 
+cpp_binary:
+  name: benchmark
+  libs: benchmark_main
+
+cpp_library:
+  name: benchmark_main
+  sources: benchmark_main.cpp
+  libs:
+    error
+    time
+    to_string
+
 cpp_library:
   name: binary_format
   sources: binary_format.cpp
@@ -22,6 +34,11 @@ cpp_library:
 cpp_library:
   name: bytes_buffer
   headers: bytes_buffer.hpp
+
+cpp_library:
+  name: concepts
+  headers: concepts.hpp
+  libs: unit
 
 cpp_library:
   name: copy
@@ -60,9 +77,9 @@ cpp_test:
   output: error_test.out
 
 cpp_library:
-  name: file_descriptor
-  sources: file_descriptor.cpp
-  headers: file_descriptor.hpp
+  name: fd
+  sources: fd.cpp
+  headers: fd.hpp
   libs:
     data_buffer
     error
@@ -79,7 +96,7 @@ cpp_library:
   headers: file_reader.hpp
   libs:
     error
-    file_descriptor
+    fd
     file_path
     reader
 
@@ -99,7 +116,7 @@ cpp_library:
   libs:
     bytes_buffer
     error
-    file_descriptor
+    fd
     file_path
     writer
 
@@ -131,6 +148,20 @@ cpp_test:
   output: filesystem_test.out
 
 cpp_library:
+  name: fixed_rstring
+  headers: fixed_rstring.hpp
+
+cpp_library:
+  name: float_to_string
+  sources: float_to_string.cpp
+  headers: float_to_string.hpp
+  libs:
+    fixed_rstring
+    format_params
+    int_to_string
+    to_string_t
+
+cpp_library:
   name: format
   sources: format.cpp
   headers: format.hpp
@@ -139,44 +170,57 @@ cpp_library:
 cpp_library:
   name: format_array
   headers: format_array.hpp
-  libs: to_string
+  libs: to_string_t
 
 cpp_library:
   name: format_filesystem
   headers: format_filesystem.hpp
-  libs: to_string
+  libs: to_string_t
 
 cpp_library:
   name: format_map
   headers: format_map.hpp
-  libs: to_string
+  libs: to_string_t
 
 cpp_library:
   name: format_memory
   headers: format_memory.hpp
-  libs: to_string
+  libs: to_string_t
 
 cpp_library:
   name: format_optional
   headers: format_optional.hpp
-  libs: to_string
+  libs: to_string_t
+
+cpp_library:
+  name: format_params
+  headers: format_params.hpp
 
 cpp_library:
   name: format_set
   headers: format_set.hpp
-  libs: to_string
+  libs: to_string_t
+
+cpp_test:
+  name: format_test
+  sources: format_test.cpp
+  libs:
+    error
+    format
+    testing
+  output: format_test.out
 
 cpp_library:
   name: format_variant
   headers: format_variant.hpp
   libs:
-    to_string
+    to_string_t
     type_name
 
 cpp_library:
   name: format_vector
   headers: format_vector.hpp
-  libs: to_string
+  libs: to_string_t
 
 cpp_library:
   name: hash_functions
@@ -188,26 +232,21 @@ cpp_library:
   headers: hex.hpp
 
 cpp_library:
+  name: int_to_string
+  sources: int_to_string.cpp
+  headers: int_to_string.hpp
+  libs:
+    fixed_rstring
+    format_params
+    to_string_t
+
+cpp_library:
   name: nref
   headers: nref.hpp
 
 cpp_library:
   name: os
   headers: os.hpp
-
-cpp_library:
-  name: pretty_print
-  sources: pretty_print.cpp
-  headers: pretty_print.hpp
-
-cpp_test:
-  name: pretty_print_test
-  sources: pretty_print_test.cpp
-  libs:
-    format
-    pretty_print
-    testing
-  output: pretty_print_test.out
 
 cpp_library:
   name: queue
@@ -235,13 +274,21 @@ cpp_library:
   headers: signal.hpp
   libs:
     error
-    file_descriptor
+    fd
 
 cpp_library:
   name: simple_checksum
   sources: simple_checksum.cpp
   headers: simple_checksum.hpp
   libs: hex
+
+cpp_library:
+  name: simple_timer
+  sources: simple_timer.cpp
+  headers: simple_timer.hpp
+  libs:
+    span
+    time
 
 cpp_library:
   name: sort
@@ -254,7 +301,16 @@ cpp_library:
   libs:
     error
     format
-    pretty_print
+    to_string_t
+
+cpp_test:
+  name: span_test
+  sources: span_test.cpp
+  libs:
+    format
+    span
+    testing
+  output: span_test.out
 
 cpp_library:
   name: string_mixin
@@ -295,7 +351,7 @@ cpp_library:
   headers: sub_process.hpp
   libs:
     error
-    file_descriptor
+    fd
     file_path
     format
     string_util
@@ -334,6 +390,26 @@ cpp_library:
 cpp_library:
   name: to_string
   headers: to_string.hpp
+  libs:
+    concepts
+    to_string_builtin
+    to_string_t
+
+cpp_library:
+  name: to_string_builtin
+  sources: to_string_builtin.cpp
+  headers: to_string_builtin.hpp
+  libs:
+    float_to_string
+    int_to_string
+    to_string_t
+
+cpp_library:
+  name: to_string_t
+  headers: to_string_t.hpp
+  libs:
+    concepts
+    format_params
 
 cpp_library:
   name: type_name

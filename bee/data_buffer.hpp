@@ -44,6 +44,7 @@ struct DataBuffer {
   void write(DataBuffer&& data);
   void write(const char* data, size_t size);
   void write(const std::byte* data, size_t size);
+  void write(std::vector<std::byte>&& data);
 
   void prepend(DataBuffer&& data);
 

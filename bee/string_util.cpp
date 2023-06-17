@@ -1,8 +1,9 @@
+#include <cassert>
+#include <cstdint>
+#include <optional>
+
 #include "error.hpp"
 #include "util.hpp"
-
-#include <cassert>
-#include <optional>
 
 using std::string;
 using std::vector;
@@ -26,7 +27,7 @@ vector<string> split(const string& str, const string& sep)
   return output;
 }
 
-vector<string> split_space(const string& str)
+vector<string> split_space(const string& str, const int max_parts)
 {
   vector<string> output;
   string partial;
@@ -40,10 +41,12 @@ vector<string> split_space(const string& str)
 
   for (char c : str) {
     if (isspace(c)) {
-      flush();
-    } else {
-      partial += c;
+      if (std::ssize(output) + 2 <= max_parts || partial.empty()) {
+        flush();
+        continue;
+      }
     }
+    partial += c;
   }
   flush();
 

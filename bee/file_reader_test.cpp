@@ -1,5 +1,4 @@
 #include "file_reader.hpp"
-
 #include "file_writer.hpp"
 #include "testing.hpp"
 
@@ -26,8 +25,8 @@ TEST(basic)
   string content = create_content();
   must_unit(FileWriter::save_file(tmp_filename, content));
   must(content_read, FileReader::read_file(tmp_filename));
-  print_line(content_read == content);
-  print_line(content.size());
+  P(content_read == content);
+  P(content.size());
 }
 
 TEST(read_by_blocks)
@@ -42,8 +41,8 @@ TEST(read_by_blocks)
       bytes_read, file->read(reinterpret_cast<std::byte*>(buf), sizeof(buf)));
     content_read.append(buf, bytes_read);
   }
-  print_line(content_read == content);
-  print_line(content.size());
+  P(content_read == content);
+  P(content.size());
 }
 
 } // namespace

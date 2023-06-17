@@ -72,6 +72,12 @@ FilePath FilePath::operator/(const FilePath& tail) const
   return FilePath(_path / tail._path);
 }
 
+FilePath& FilePath::operator/=(const string& tail)
+{
+  if (!tail.empty()) { _path /= tail; }
+  return *this;
+}
+
 FilePath FilePath::operator+(const string& suffix) const
 {
   return FilePath(_path.string() + suffix);

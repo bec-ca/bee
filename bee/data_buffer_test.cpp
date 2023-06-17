@@ -1,5 +1,4 @@
 #include "data_buffer.hpp"
-
 #include "format.hpp"
 #include "testing.hpp"
 
@@ -10,11 +9,11 @@ TEST(read_line)
 {
   DataBuffer b;
   auto print_lines = [&b]() {
-    print_line("-----------------------");
+    P("-----------------------");
     while (true) {
       auto line = b.read_line();
       if (!line.has_value()) { break; }
-      print_line(*line);
+      P(*line);
     }
   };
   b.write("first line\nsecond line\nthird line\ntrailing line");

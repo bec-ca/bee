@@ -1,10 +1,10 @@
 #pragma once
 
-#include "error.hpp"
-#include "span.hpp"
-
 #include <cstdint>
 #include <string>
+
+#include "error.hpp"
+#include "span.hpp"
 
 namespace bee {
 

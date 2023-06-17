@@ -1,15 +1,18 @@
 #pragma once
 
-#include "error.hpp"
-
+#include <limits>
 #include <string>
 #include <vector>
+
+#include "error.hpp"
 
 namespace bee {
 
 std::vector<std::string> split(const std::string& str, const std::string& sep);
 
-std::vector<std::string> split_space(const std::string& str);
+std::vector<std::string> split_space(
+  const std::string& str,
+  const int max_parts = std::numeric_limits<int>::max());
 
 template <class T> std::string join(const T& container, const std::string& sep)
 {

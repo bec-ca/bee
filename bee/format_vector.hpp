@@ -1,13 +1,13 @@
 #pragma once
 
-#include "to_string.hpp"
-
 #include <string>
 #include <vector>
 
+#include "to_string_t.hpp"
+
 namespace bee {
 
-template <class T> struct to_string<std::vector<T>> {
+template <class T> struct to_string_t<std::vector<T>> {
   static std::string convert(const std::vector<T>& values)
   {
     return convert_container(values);

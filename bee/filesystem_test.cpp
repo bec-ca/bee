@@ -1,16 +1,15 @@
-#include "filesystem.hpp"
+#include <chrono>
+#include <filesystem>
+#include <random>
 
 #include "error.hpp"
+#include "filesystem.hpp"
 #include "format.hpp"
 #include "format_filesystem.hpp"
 #include "format_vector.hpp"
 #include "sort.hpp"
 #include "string_util.hpp"
 #include "testing.hpp"
-
-#include <chrono>
-#include <filesystem>
-#include <random>
 
 namespace bee {
 namespace {
@@ -20,7 +19,7 @@ FilePath create_tmp_dir()
   std::random_device rd;
   std::uniform_int_distribution<uint64_t> dist;
   auto tmp_dir = FilePath::of_std_path(fs::temp_directory_path()) /
-                 format("filesystem-test-$", dist(rd));
+                 F("filesystem-test-$", dist(rd));
   must_unit(FileSystem::mkdirs(tmp_dir));
   return tmp_dir;
 }
@@ -39,7 +38,7 @@ TEST(mkdir)
 
   must(files, FileSystem::list_regular_files(tmp_dir));
   for (const auto& file : files) {
-    print_line("File: $", remove_path_prefix(file, tmp_dir));
+    P("File: $", remove_path_prefix(file, tmp_dir));
   }
 
   fs::remove_all(tmp_dir.to_std_path());
@@ -66,7 +65,7 @@ TEST(list_files)
     must(files, FileSystem::list_regular_files(tmp_dir, {.recursive = true}));
     sort(files);
     for (const auto& file : files) {
-      print_line("File: $", remove_path_prefix(file, tmp_dir));
+      P("File: $", remove_path_prefix(file, tmp_dir));
     }
   }
 
@@ -77,7 +76,7 @@ TEST(list_files)
       FileSystem::list_regular_files(
         FilePath::of_string("./"), {.recursive = true}));
     sort(files);
-    for (const auto& file : files) { print_line("File: $", file); }
+    for (const auto& file : files) { P("File: $", file); }
   }
 
   fs::remove_all(tmp_dir.to_std_path());
@@ -91,7 +90,7 @@ TEST(mtime)
   must_unit(FileSystem::touch_file(file_name));
 
   must(mtime, FileSystem::file_mtime(file_name));
-  print_line(mtime > Time::epoch());
+  P(mtime > Time::epoch());
 
   fs::remove_all(tmp_dir.to_std_path());
 }

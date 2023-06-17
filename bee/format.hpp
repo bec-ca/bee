@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cassert>
+#include <optional>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 
@@ -8,154 +10,87 @@
 
 namespace bee {
 
-template <> struct to_string<int> {
-  static std::string convert(int value) { return std::to_string(value); }
-};
-
-template <> struct to_string<unsigned int> {
-  static std::string convert(unsigned int value)
-  {
-    return std::to_string(value);
-  }
-};
-
-template <> struct to_string<short> {
-  static std::string convert(short value) { return std::to_string(value); }
-};
-
-template <> struct to_string<unsigned short> {
-  static std::string convert(unsigned short value)
-  {
-    return std::to_string(value);
-  }
-};
-
-template <> struct to_string<long> {
-  static std::string convert(long value) { return std::to_string(value); }
-};
-
-template <> struct to_string<unsigned long> {
-  static std::string convert(unsigned long value)
-  {
-    return std::to_string(value);
-  }
-};
-
-template <> struct to_string<long long> {
-  static std::string convert(long long value) { return std::to_string(value); }
-};
-
-template <> struct to_string<unsigned long long> {
-  static std::string convert(unsigned long long value)
-  {
-    return std::to_string(value);
-  }
-};
-
-template <> struct to_string<char> {
-  static std::string convert(char value) { return std::string(1, value); }
-};
-
-template <> struct to_string<signed char> {
-  static std::string convert(signed char value)
-  {
-    return std::to_string(int(value));
-  }
-};
-
-template <> struct to_string<std::string> {
-  static std::string convert(const std::string& value) { return value; }
-};
-
-template <> struct to_string<const char*> {
-  static std::string convert(const char* value) { return value; }
-};
-
-template <> struct to_string<char*> {
-  static std::string convert(const char* value) { return value; }
-};
-
-template <> struct to_string<bool> {
-  static std::string convert(bool value) { return value ? "true" : "false"; }
-};
-
-template <> struct to_string<float> {
-  static std::string convert(float value) { return std::to_string(value); }
-};
-
-template <> struct to_string<double> {
-  static std::string convert(double value) { return std::to_string(value); }
-};
-
-template <> struct to_string<void*> {
-  static std::string convert(const void* value);
-};
-
-template <> struct to_string<const void*> {
-  static std::string convert(const void* value);
-};
-
-template <class T> struct to_string {
-  static std::string convert(const T& value) { return value.to_string(); }
-};
-
 template <class T> std::string convert_container(const T& container)
 {
   std::string output;
   for (const auto& el : container) {
     if (!output.empty()) { output += " "; }
-    output += to_string<typename T::value_type>::convert(el);
+    output += to_string(el);
   }
   return output;
 }
 
-template <class T> std::string convert_one(const T& value)
-{
-  return to_string<std::decay_t<T>>::convert(value);
-}
+namespace format_details {
+
+void raise_exn(const char* file, int line, const char* format, const char* msg);
+
+std::optional<FormatParams> get_next_format(
+  const char* file,
+  int line,
+  std::string& output,
+  const char* format,
+  int& idx);
+
+template <class... Ts>
+void format_rec2(
+  const char* file,
+  int line,
+  const char* format,
+  int idx,
+  std::string& output,
+  Ts&&... args);
 
 template <class T, class... Ts>
-void format_rec(const char* format, std::string& output, T&& v1, Ts&&... args)
+void write_one_rec(
+  const char* file,
+  int line,
+  const char* format,
+  int idx,
+  const FormatParams& params,
+  std::string& output,
+  T&& v1,
+  Ts&&... args)
 {
-  while (*format) {
-    if (*format == '$') {
-      format++;
-      if (*format == '$') {
-        output += '$';
-        format++;
-      } else {
-        output += to_string<std::decay_t<T>>::convert(v1);
-        if constexpr ((sizeof...(Ts)) > 0) {
-          format_rec(format, output, std::forward<Ts>(args)...);
-        } else {
-          output += format;
-        }
-        return;
-      }
-    } else {
-      output += *format;
-      format++;
-    }
-  }
-  if constexpr ((sizeof...(Ts)) > 0) {
-    assert(false && "extra unused format arguments");
+  output += to_string(v1, params);
+  format_rec2(file, line, format, idx, output, std::forward<Ts>(args)...);
+}
+
+void write_one_rec(
+  const char* file,
+  int line,
+  const char*,
+  int,
+  const FormatParams&,
+  std::string&);
+
+template <class... Ts>
+void format_rec2(
+  const char* file,
+  int line,
+  const char* format,
+  int idx,
+  std::string& output,
+  Ts&&... args)
+{
+  if (auto params = get_next_format(file, line, output, format, idx)) {
+    write_one_rec(
+      file, line, format, idx, *params, output, std::forward<Ts>(args)...);
+  } else if constexpr (sizeof...(Ts) > 0) {
+    raise_exn(file, line, format, "Extra arguments in format");
   }
 }
 
-template <class T> std::string format(const T& v)
+template <class T> std::string format(const char*, int, T&& v)
 {
-  return to_string<std::decay_t<T>>::convert(v);
+  return to_string(v);
 }
 
-template <class... Ts> std::string format(const char* f, Ts&&... args)
+template <class... Ts>
+std::string format(const char* file, int line, const char* f, Ts&&... args)
 {
-  if constexpr ((sizeof...(Ts)) == 0) {
-    return f;
-  } else {
-    std::string output;
-    format_rec(f, output, std::forward<Ts>(args)...);
-    return output;
-  }
+  std::string output;
+  format_rec2(file, line, f, 0, output, std::forward<Ts>(args)...);
+  return output;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -167,14 +102,16 @@ void print_str(std::string str);
 inline void print_line(const std::string& str) { print_str(str); }
 inline void print_line(std::string&& str) { print_str(std::move(str)); }
 
-template <class T> void print_line(T&& v)
+template <class T> void print_line(const char* file, int line, T&& v)
 {
-  print_str(format(std::forward<T>(v)));
+  print_str(bee::format_details::format(file, line, std::forward<T>(v)));
 }
 
-template <class... Ts> void print_line(const char* f, Ts&&... args)
+template <class... Ts>
+void print_line(const char* file, int line, const char* f, Ts&&... args)
 {
-  print_str(format(f, std::forward<Ts>(args)...));
+  print_str(
+    bee::format_details::format(file, line, f, std::forward<Ts>(args)...));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -183,23 +120,49 @@ template <class... Ts> void print_line(const char* f, Ts&&... args)
 
 void print_err_str(std::string str);
 
-inline void print_err_line(const std::string& str) { print_err_str(str); }
-inline void print_err_line(std::string&& str) { print_err_str(std::move(str)); }
-
-template <class T> void print_err_line(T&& v)
+inline void print_err_line(const char*, int, const std::string& str)
 {
-  print_err_str(format(std::forward<T>(v)));
+  print_err_str(str);
 }
 
-template <class... Ts> void print_err_line(const char* f, Ts... args)
+inline void print_err_line(const char*, int, std::string&& str)
 {
-  print_err_str(format(f, args...));
+  print_err_str(std::move(str));
 }
 
-template <class T, class F> struct to_string<std::pair<T, F>> {
+template <class T> void print_err_line(const char* file, int line, T&& v)
+{
+  print_err_str(bee::format_details::format(file, line, std::forward<T>(v)));
+}
+
+template <class... Ts>
+void print_err_line(const char* file, int line, const char* f, Ts... args)
+{
+  print_err_str(bee::format_details::format(file, line, f, args...));
+}
+
+} // namespace format_details
+
+////////////////////////////////////////////////////////////////////////////////
+// macros
+//
+
+#define F(...) ::bee::format_details::format(__FILE__, __LINE__, __VA_ARGS__)
+
+#define P(...)                                                                 \
+  ::bee::format_details::print_line(__FILE__, __LINE__, __VA_ARGS__)
+
+#define PE(...)                                                                \
+  ::bee::format_details::print_err_line(__FILE__, __LINE__, __VA_ARGS__)
+
+////////////////////////////////////////////////////////////////////////////////
+// pair
+//
+
+template <class T, class F> struct to_string_t<std::pair<T, F>> {
   static std::string convert(const std::pair<T, F>& p)
   {
-    return format("($, $)", p.first, p.second);
+    return F("[$ $]", p.first, p.second);
   }
 };
 

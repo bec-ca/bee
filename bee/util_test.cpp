@@ -1,8 +1,7 @@
-#include "util.hpp"
-
 #include "format.hpp"
 #include "string_util.hpp"
 #include "testing.hpp"
+#include "util.hpp"
 
 using std::string;
 
@@ -15,7 +14,7 @@ TEST(tuple_to_vector)
   string b = "bar";
   auto tuple = make_tuple(a, b);
   auto v = tuple_to_vector<string>(tuple);
-  print_line(join(v, " "));
+  P(join(v, " "));
 }
 
 TEST(is_one_of)

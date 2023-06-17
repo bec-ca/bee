@@ -1,7 +1,7 @@
 #pragma once
 
 #include "error.hpp"
-#include "file_descriptor.hpp"
+#include "fd.hpp"
 
 namespace bee {
 
@@ -11,10 +11,10 @@ enum class SignalCode {
 };
 
 struct Signal {
-  static OrError<Unit> block_signal(SignalCode signal);
+  static OrError<> block_signal(SignalCode signal);
 
 #ifdef __linux
-  static OrError<FileDescriptor> create_signal_fd(SignalCode signal);
+  static OrError<FD> create_signal_fd(SignalCode signal);
 #endif
 };
 

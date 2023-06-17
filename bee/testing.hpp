@@ -22,6 +22,6 @@ int add_to_tests(std::function<void()> f, const std::string& name);
   }                                                                            \
   void test_##name()
 
-#define PRINT_EXPR(v) bee::print_line("$ -> $", #v, v);
+#define PRINT_EXPR(v) P("$ -> $", #v, v);
 
 } // namespace bee

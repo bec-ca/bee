@@ -1,12 +1,11 @@
 #include "signal.hpp"
 
-#include "file_descriptor.hpp"
-
 #include <csignal>
 #include <cstring>
 
-namespace bee {
+#include "fd.hpp"
 
+namespace bee {
 namespace {
 
 int to_signal_int(SignalCode code)
@@ -26,20 +25,19 @@ OrError<sigset_t> create_mask(SignalCode signal)
   int signal_i = to_signal_int(signal);
   sigset_t mask;
   if (sigemptyset(&mask) != 0) {
-    return Error::format("Failed to initialize sigset_t: $", strerror(errno));
+    return Error::fmt("Failed to initialize sigset_t: $", strerror(errno));
   }
   if (sigaddset(&mask, signal_i) != 0) {
-    return Error::format(
-      "Failed to set signal to sigset_t: $", strerror(errno));
+    return Error::fmt("Failed to set signal to sigset_t: $", strerror(errno));
   }
 
   return mask;
 }
 
-OrError<Unit> block_mask(const sigset_t& mask)
+OrError<> block_mask(const sigset_t& mask)
 {
   if (sigprocmask(SIG_BLOCK, &mask, nullptr) != 0) {
-    return Error::format("Failed to block signal: $", strerror(errno));
+    return Error::fmt("Failed to block signal: $", strerror(errno));
   }
 
   return ok();
@@ -47,7 +45,7 @@ OrError<Unit> block_mask(const sigset_t& mask)
 
 } // namespace
 
-OrError<Unit> Signal::block_signal(SignalCode signal)
+OrError<> Signal::block_signal(SignalCode signal)
 {
   bail(mask, create_mask(signal));
 
@@ -62,17 +60,17 @@ OrError<Unit> Signal::block_signal(SignalCode signal)
 
 namespace bee {
 
-OrError<FileDescriptor> Signal::create_signal_fd(SignalCode signal)
+OrError<FD> Signal::create_signal_fd(SignalCode signal)
 {
   bail(mask, create_mask(signal));
   bail_unit(block_mask(mask));
 
   int fd = ::signalfd(-1, &mask, SFD_CLOEXEC | SFD_NONBLOCK);
   if (fd == -1) {
-    return Error::format("Failed to create signalfd: $", strerror(errno));
+    return Error::fmt("Failed to create signalfd: $", strerror(errno));
   }
 
-  return FileDescriptor(fd);
+  return FD(fd);
 }
 
 } // namespace bee

@@ -38,3 +38,31 @@ num_parts:0 parts:[]
 	  bar   '
 num_parts:2 parts:['foo','bar']
 
+================================================================================
+Test: split_space_max_parts
+------------------------
+'foo bar yo'
+num_parts:2 parts:['foo','bar yo']
+------------------------
+'   foo   bar    yo    '
+num_parts:2 parts:['foo','bar    yo    ']
+------------------------
+'    '
+num_parts:0 parts:[]
+------------------------
+''
+num_parts:0 parts:[]
+------------------------
+'   foo 
+	  bar   '
+num_parts:2 parts:['foo','bar   ']
+------------------------
+'foo bar yo baz taz'
+num_parts:2 parts:['foo','bar yo baz taz']
+------------------------
+'foo bar yo baz taz'
+num_parts:3 parts:['foo','bar','yo baz taz']
+------------------------
+'foo bar yo baz taz'
+num_parts:4 parts:['foo','bar','yo','baz taz']
+

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "span.hpp"
-
 #include <condition_variable>
+#include <list>
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <queue>
 #include <variant>
+
+#include "span.hpp"
 
 namespace bee {
 
@@ -100,18 +100,24 @@ template <class T> struct Queue {
     auto lk = lock();
     _wait_writable(lk);
     if (_closed) { return false; }
-    _queue.emplace(std::forward<U>(value));
+    _queue.emplace_back(std::forward<U>(value));
     _read_cv.notify_one();
     return true;
   }
 
   void close()
   {
-    if (_closed) return;
     auto lk = lock();
+    if (_closed) return;
     _closed = true;
     _read_cv.notify_all();
     _write_cv.notify_all();
+  }
+
+  bool is_closed_and_empty() const
+  {
+    auto lk = lock();
+    return _closed && _queue.empty();
   }
 
   Iterator begin() { return Iterator(this); }
@@ -121,13 +127,13 @@ template <class T> struct Queue {
  private:
   using ul = std::unique_lock<std::mutex>;
 
-  ul lock() { return ul(_mutex); }
+  ul lock() const { return ul(_mutex); }
 
   std::optional<T> _pop_no_lock()
   {
     if (!_queue.empty()) {
       auto ret = std::move(_queue.front());
-      _queue.pop();
+      _queue.pop_front();
       _write_cv.notify_one();
       return ret;
     } else {
@@ -158,8 +164,8 @@ template <class T> struct Queue {
   std::optional<int> _max_size;
   std::condition_variable _read_cv;
   std::condition_variable _write_cv;
-  std::mutex _mutex;
-  std::queue<T> _queue;
+  mutable std::mutex _mutex;
+  std::list<T> _queue;
   bool _closed = false;
 };
 

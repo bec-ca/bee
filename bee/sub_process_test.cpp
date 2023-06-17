@@ -1,5 +1,4 @@
 #include "sub_process.hpp"
-
 #include "testing.hpp"
 
 namespace bee {
@@ -7,16 +6,18 @@ namespace {
 
 void log()
 {
-  print_line("num_running_processes: $", SubProcess::num_running_processes());
+  P("num_running_processes: $", SubProcess::num_running_processes());
 }
 
 TEST(run_proc)
 {
   log();
-  must_unit(SubProcess::run({.cmd = "/bin/echo", .args = {"hello"}}));
+  must_unit(SubProcess::run(
+    {.cmd = FilePath::of_string("/bin/echo"), .args = {"hello"}}));
   log();
-  must_unit(
-    SubProcess::run({.cmd = "pwd", .cwd = FilePath::of_string("/usr/bin")}));
+  must_unit(SubProcess::run(
+    {.cmd = FilePath::of_string("pwd"),
+     .cwd = FilePath::of_string("/usr/bin")}));
   log();
 }
 
@@ -26,13 +27,16 @@ TEST(spawn_proc_stdout_spec)
   log();
   must(
     proc,
-    SubProcess::spawn({.cmd = "echo", .args = {"yo"}, .stdout_spec = output}));
+    SubProcess::spawn(
+      {.cmd = FilePath::of_string("echo"),
+       .args = {"yo"},
+       .stdout_spec = output}));
   log();
   char data[1024];
   must(ret, output->fd()->read(reinterpret_cast<std::byte*>(data), 100));
   data[ret.bytes_read()] = 0;
   must_unit(proc->wait());
-  print_line(data);
+  P(data);
   log();
 }
 
@@ -40,7 +44,10 @@ TEST(spawn_proc_stdin_spec)
 {
   log();
   auto input = SubProcess::Pipe::create();
-  must(proc, SubProcess::spawn({.cmd = "cat", .stdin_spec = input}));
+  must(
+    proc,
+    SubProcess::spawn(
+      {.cmd = FilePath::of_string("cat"), .stdin_spec = input}));
   log();
   std::string msg = "secret code 123\n";
   must(bytes, input->fd()->write(msg));
@@ -54,11 +61,15 @@ TEST(spawn_wait_any)
 {
   log();
 
-  must(proc1, SubProcess::spawn({.cmd = "sleep", .args = {"0.2"}}));
+  must(
+    proc1,
+    SubProcess::spawn({.cmd = FilePath::of_string("sleep"), .args = {"0.2"}}));
 
   log();
 
-  must(proc2, SubProcess::spawn({.cmd = "sleep", .args = {"0.4"}}));
+  must(
+    proc2,
+    SubProcess::spawn({.cmd = FilePath::of_string("sleep"), .args = {"0.4"}}));
 
   log();
 
@@ -70,16 +81,18 @@ TEST(spawn_wait_any)
 
   log();
 
-  print_line(proc1 == w1->proc);
-  print_line(proc2 == w2->proc);
+  P(proc1 == w1->proc);
+  P(proc2 == w2->proc);
 }
 
 TEST(output_to_string)
 {
   auto output = SubProcess::OutputToString::create();
-  must_unit(
-    SubProcess::run({.cmd = "echo", .args = {"yo"}, .stdout_spec = output}));
-  print_line("output: '$'", output->get_output());
+  must_unit(SubProcess::run(
+    {.cmd = FilePath::of_string("echo"),
+     .args = {"yo"},
+     .stdout_spec = output}));
+  P("output: '$'", output->get_output());
 }
 
 } // namespace

@@ -11,7 +11,7 @@ StringWriter::ptr StringWriter::create() { return make_shared<StringWriter>(); }
 
 void StringWriter::close() {}
 
-OrError<Unit> StringWriter::write(const string& data)
+OrError<> StringWriter::write(const string& data)
 {
   _content += data;
   return ok();

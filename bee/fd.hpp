@@ -1,10 +1,10 @@
 #pragma once
 
+#include <memory>
+
 #include "data_buffer.hpp"
 #include "error.hpp"
 #include "file_path.hpp"
-
-#include <memory>
 
 namespace bee {
 
@@ -27,29 +27,29 @@ struct ReadResult {
   bool _is_eof;
 };
 
-struct FileDescriptor {
-  using shared_ptr = std::shared_ptr<FileDescriptor>;
-  using unique_ptr = std::unique_ptr<FileDescriptor>;
+struct FD {
+  using shared_ptr = std::shared_ptr<FD>;
+  using unique_ptr = std::unique_ptr<FD>;
 
-  explicit FileDescriptor(int fd);
-  ~FileDescriptor();
+  explicit FD(int fd);
+  ~FD();
 
-  FileDescriptor(const FileDescriptor& other) = delete;
-  FileDescriptor(FileDescriptor&&);
+  FD(const FD& other) = delete;
+  FD(FD&&);
 
-  FileDescriptor& operator=(const FileDescriptor& other) = delete;
-  FileDescriptor& operator=(FileDescriptor&&) = delete;
+  FD& operator=(const FD& other) = delete;
+  FD& operator=(FD&&) = delete;
 
-  static OrError<FileDescriptor> create_file(const FilePath& filename);
-  static OrError<FileDescriptor> open_file(const FilePath& filename);
+  static OrError<FD> create_file(const FilePath& filename);
+  static OrError<FD> open_file(const FilePath& filename);
 
   bool close();
   bool is_closed();
 
   bool empty();
 
-  OrError<Unit> dup_onto(const FileDescriptor& onto);
-  OrError<FileDescriptor> dup();
+  OrError<> dup_onto(const FD& onto);
+  OrError<FD> dup();
 
   shared_ptr to_shared() &&;
   unique_ptr to_unique() &&;
@@ -67,9 +67,9 @@ struct FileDescriptor {
   OrError<ReadResult> read_all_available(DataBuffer& buffer);
   OrError<ReadResult> recv_all_available(DataBuffer& buffer);
 
-  OrError<std::optional<FileDescriptor>> accept();
+  OrError<std::optional<FD>> accept();
 
-  OrError<Unit> flush();
+  OrError<> flush();
 
   int int_fd() const;
 
@@ -81,11 +81,11 @@ struct FileDescriptor {
   static const shared_ptr& stderr_filedesc();
   static const shared_ptr& stdin_filedesc();
 
-  OrError<Unit> set_blocking(bool blocking);
+  OrError<> set_blocking(bool blocking);
 
   bool is_write_blocked() const;
 
-  OrError<Unit> seek(size_t pos);
+  OrError<> seek(size_t pos);
   OrError<size_t> remaining_bytes();
 
  private:
@@ -97,8 +97,8 @@ struct FileDescriptor {
 struct Pipe {
   ~Pipe();
 
-  FileDescriptor::shared_ptr read_fd;
-  FileDescriptor::shared_ptr write_fd;
+  FD::shared_ptr read_fd;
+  FD::shared_ptr write_fd;
 
   void close();
 

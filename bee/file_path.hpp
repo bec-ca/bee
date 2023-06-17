@@ -50,6 +50,8 @@ struct FilePath {
   FilePath operator/(const std::string& tail) const;
   FilePath operator/(const FilePath& tail) const;
 
+  FilePath& operator/=(const std::string& tail);
+
   FilePath operator+(const std::string& suffix) const;
 
   FilePath& operator=(const FilePath& other);

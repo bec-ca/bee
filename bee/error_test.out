@@ -33,3 +33,17 @@ Error(trying something: It didn't work!)
 Test: compile_error
 Error(Error1!)
 
+================================================================================
+Test: bail_unit
+f() -> Error(Test error)
+
+================================================================================
+Test: try_with
+try_with([&]() -> OrError<Unit> { return Error("foo"); }) -> Ok(Error(foo))
+try_with([&]() -> OrError<Unit> { throw std::runtime_error("boop"); }) -> Error(boop)
+
+================================================================================
+Test: void_value
+[]() -> OrError<void> { return ok(); }() -> Ok()
+[]() -> OrError<void> { return Error("failed"); }() -> Error(failed)
+

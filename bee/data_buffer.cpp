@@ -1,9 +1,9 @@
 #include "data_buffer.hpp"
 
-#include "bee/util.hpp"
-
 #include <cassert>
 #include <cstddef>
+
+#include "bee/util.hpp"
 
 using std::string;
 using std::vector;
@@ -15,9 +15,8 @@ using Bytes = vector<std::byte>;
 
 Bytes to_bytes(const string& str)
 {
-  Bytes out;
-  for (char c : str) { out.push_back(std::byte(c)); }
-  return out;
+  auto bytes = reinterpret_cast<const std::byte*>(str.data());
+  return Bytes(bytes, bytes + str.size());
 }
 
 } // namespace
@@ -101,6 +100,11 @@ void DataBuffer::write(DataBuffer&& other)
 void DataBuffer::write(const std::byte* data, size_t size)
 {
   _blocks.push_back(DataBlock(data, size));
+}
+
+void DataBuffer::write(std::vector<std::byte>&& data)
+{
+  _blocks.push_back(DataBlock(std::move(data)));
 }
 
 void DataBuffer::prepend(DataBuffer&& other)

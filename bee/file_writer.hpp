@@ -1,14 +1,14 @@
 #pragma once
 
-#include "bytes_buffer.hpp"
-#include "error.hpp"
-#include "file_descriptor.hpp"
-#include "file_path.hpp"
-#include "writer.hpp"
-
 #include <array>
 #include <memory>
 #include <string>
+
+#include "bytes_buffer.hpp"
+#include "error.hpp"
+#include "fd.hpp"
+#include "file_path.hpp"
+#include "writer.hpp"
 
 namespace bee {
 
@@ -25,24 +25,26 @@ struct FileWriter final : public Writer {
 
   virtual ~FileWriter();
 
-  OrError<Unit> write(const std::byte* data, size_t size);
-  virtual OrError<Unit> write(const std::string& data) override;
-  OrError<Unit> write(const std::vector<std::byte>& data);
-  OrError<Unit> write(const DataBuffer& data);
+  virtual OrError<> write(const std::string& data) override;
+  OrError<> write(const std::byte* data, size_t size);
+  OrError<> write(const std::vector<std::byte>& data);
+  OrError<> write(const DataBuffer& data);
+  // TODO: write function that takes DataBuffer&& and avoid copying to the
+  // internal buffer
 
   virtual void close() override;
 
-  static OrError<Unit> save_file(
+  static OrError<> save_file(
     const FilePath& filename, const std::string& content);
-  static OrError<Unit> save_file(
+  static OrError<> save_file(
     const FilePath& filename, const std::vector<std::byte>& content);
 
-  OrError<Unit> flush();
+  OrError<> flush();
 
  private:
-  FileWriter(FileDescriptor&& fd);
+  FileWriter(FD&& fd);
 
-  FileDescriptor _fd;
+  FD _fd;
 
   BytesBuffer _buffer;
 };

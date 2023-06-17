@@ -1,11 +1,12 @@
 #include "span.hpp"
 
-#include "format.hpp"
-#include "pretty_print.hpp"
-
 #include <chrono>
 #include <limits>
 #include <thread>
+
+#include "format.hpp"
+
+#include "bee/to_string_t.hpp"
 
 namespace bee {
 namespace {
@@ -110,25 +111,36 @@ Span Span::operator/(int64_t by) const { return Span(_span_nanos / by); }
 
 Span Span::operator*(int64_t by) const { return Span(_span_nanos * by); }
 
+Span& Span::operator/=(int64_t by)
+{
+  _span_nanos /= by;
+  return *this;
+}
+
+Span& Span::operator*=(int64_t by)
+{
+  _span_nanos *= by;
+  return *this;
+}
+
 const Span Span::min = Span::of_nanos(std::numeric_limits<int64_t>::min());
 const Span Span::max = Span::of_nanos(std::numeric_limits<int64_t>::max());
 
-std::string Span::to_string() const
+std::string Span::to_string(const FormatParams& p) const
 {
-  if (_span_nanos < Constants::milli) {
-    return format("$us", PrettyPrint::format_double(to_float_micros(), 2));
+  auto t = [&p](double v) { return ::bee::to_string(v, p); };
+  if (_span_nanos < Constants::micro) {
+    return F("{}ns", t(to_nanos()));
+  } else if (_span_nanos < Constants::milli) {
+    return F("{}us", t(to_float_micros()));
   } else if (_span_nanos < Constants::second) {
-    return format("$ms", PrettyPrint::format_double(to_float_millis(), 2));
+    return F("{}ms", t(to_float_millis()));
   } else if (_span_nanos < Constants::minute) {
-    return format("$s", PrettyPrint::format_double(to_float_seconds(), 2));
+    return F("{}s", t(to_float_seconds()));
   } else if (_span_nanos < Constants::hour) {
-    return format(
-      "$min",
-      PrettyPrint::format_double(double(_span_nanos) / Constants::minute, 2));
+    return F("{}min", t(double(_span_nanos) / Constants::minute));
   } else {
-    return format(
-      "$h",
-      PrettyPrint::format_double(double(_span_nanos) / Constants::hour, 2));
+    return F("{}h", t(double(_span_nanos) / Constants::hour));
   }
 }
 

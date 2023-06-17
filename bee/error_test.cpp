@@ -1,5 +1,6 @@
-#include "error.hpp"
+#include <stdexcept>
 
+#include "error.hpp"
 #include "format.hpp"
 #include "testing.hpp"
 
@@ -15,14 +16,14 @@ TEST(map_lvalue)
 
     auto result = or_err.map([](const string& str) { return str + str; });
 
-    print_line(result);
+    P(result);
   }
   {
     OrError<string> or_err(Error("Error!"));
 
     auto result = or_err.map([](const string& str) { return str + str; });
 
-    print_line(result);
+    P(result);
   }
 }
 
@@ -32,13 +33,13 @@ TEST(map_rvalue)
     auto result = OrError<string>(string("hello ")).map([](const string& str) {
       return str + str;
     });
-    print_line(result);
+    P(result);
   }
   {
     auto result = OrError<string>(Error("Error!")).map([](const string& str) {
       return str + str;
     });
-    print_line(result);
+    P(result);
   }
 }
 
@@ -49,14 +50,14 @@ TEST(map_lvalue_diff_type)
 
     auto result = or_err.map([](const string& str) { return str.size(); });
 
-    print_line(result);
+    P(result);
   }
   {
     OrError<string> or_err(Error("Error!"));
 
     auto result = or_err.map([](const string& str) { return str.size(); });
 
-    print_line(result);
+    P(result);
   }
 }
 
@@ -66,13 +67,13 @@ TEST(map_rvalue_diff_type)
     auto result = OrError<string>(string("hello ")).map([](const string& str) {
       return str.size();
     });
-    print_line(result);
+    P(result);
   }
   {
     auto result = OrError<string>(Error("Error!")).map([](const string& str) {
       return str.size();
     });
-    print_line(result);
+    P(result);
   }
 }
 
@@ -84,7 +85,7 @@ TEST(bind_lvalue)
     auto result = or_err.bind(
       [](const string& str) -> OrError<string> { return str + str; });
 
-    print_line(result);
+    P(result);
   }
   {
     OrError<string> or_err(Error("Error1!"));
@@ -92,7 +93,7 @@ TEST(bind_lvalue)
     auto result = or_err.bind(
       [](const string& str) -> OrError<string> { return str + str; });
 
-    print_line(result);
+    P(result);
   }
   {
     OrError<string> or_err(string("hello "));
@@ -101,7 +102,7 @@ TEST(bind_lvalue)
       return Error("Error2 " + str);
     });
 
-    print_line(result);
+    P(result);
   }
   {
     OrError<string> or_err(Error("Error1!"));
@@ -110,7 +111,7 @@ TEST(bind_lvalue)
       return Error("Error2 " + str);
     });
 
-    print_line(result);
+    P(result);
   }
 }
 
@@ -121,7 +122,7 @@ TEST(tag)
     return ok();
   };
 
-  print_line(run_test());
+  P(run_test());
 }
 
 TEST(compile_error)
@@ -130,7 +131,30 @@ TEST(compile_error)
 
   auto result = or_err.bind([](const string&) { return ok(5); });
 
-  print_line(result);
+  P(result);
+}
+
+TEST(bail_unit)
+{
+  auto g = []() -> OrError<> { return Error("Test error"); };
+  auto f = [&]() -> OrError<Unit> {
+    bail_unit(g());
+    return ok();
+  };
+  PRINT_EXPR(f());
+}
+
+TEST(try_with)
+{
+  PRINT_EXPR(try_with([&]() -> OrError<Unit> { return Error("foo"); }));
+  PRINT_EXPR(
+    try_with([&]() -> OrError<Unit> { throw std::runtime_error("boop"); }));
+}
+
+TEST(void_value)
+{
+  PRINT_EXPR([]() -> OrError<void> { return ok(); }());
+  PRINT_EXPR([]() -> OrError<void> { return Error("failed"); }());
 }
 
 } // namespace

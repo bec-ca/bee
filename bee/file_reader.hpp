@@ -1,16 +1,15 @@
 #pragma once
 
-#include "reader.hpp"
-
-#include "error.hpp"
-#include "file_path.hpp"
-
 #include <memory>
 #include <vector>
 
+#include "error.hpp"
+#include "file_path.hpp"
+#include "reader.hpp"
+
 namespace bee {
 
-struct FileDescriptor;
+struct FD;
 
 struct FileReader final : public Reader {
  public:
@@ -30,6 +29,7 @@ struct FileReader final : public Reader {
   virtual ~FileReader();
 
   OrError<size_t> read(std::byte* buffer, size_t size);
+  OrError<size_t> read(std::vector<std::byte>& buffer, size_t size);
   virtual OrError<std::string> read_str(size_t size) override;
 
   OrError<std::string> read_line();
@@ -46,7 +46,7 @@ struct FileReader final : public Reader {
   virtual void close() override;
 
  private:
-  FileReader(FileDescriptor&& fd);
+  FileReader(FD&& fd);
 
   size_t _available_on_buffer() const;
   bool _buffer_has_data() const;
@@ -59,7 +59,7 @@ struct FileReader final : public Reader {
   const std::byte* buffer_end() const;
   void clear_buffer();
 
-  std::unique_ptr<FileDescriptor> _fd;
+  std::unique_ptr<FD> _fd;
   size_t _buffer_pos = 0;
   std::byte _buffer[1 << 13];
   size_t _buffer_size = 0;

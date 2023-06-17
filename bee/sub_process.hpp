@@ -1,14 +1,14 @@
 #pragma once
 
-#include "error.hpp"
-#include "file_descriptor.hpp"
-#include "file_path.hpp"
-#include "time.hpp"
-
 #include <optional>
 #include <string>
 #include <variant>
 #include <vector>
+
+#include "error.hpp"
+#include "fd.hpp"
+#include "file_path.hpp"
+#include "time.hpp"
 
 namespace bee {
 
@@ -19,14 +19,14 @@ struct SubProcess {
     Pipe();
     ~Pipe();
 
-    void set_fd(const FileDescriptor::shared_ptr& fd);
+    void set_fd(const FD::shared_ptr& fd);
 
-    const FileDescriptor::shared_ptr& fd() const;
+    const FD::shared_ptr& fd() const;
 
     static ptr create();
 
    protected:
-    FileDescriptor::shared_ptr _fd;
+    FD::shared_ptr _fd;
   };
 
   struct DefaultIO {};
@@ -39,7 +39,7 @@ struct SubProcess {
 
     bool operator<(const Pid& other) const;
 
-    OrError<Unit> kill();
+    OrError<> kill();
 
    private:
     explicit Pid(int pid);
@@ -56,7 +56,7 @@ struct SubProcess {
 
     virtual OrError<std::string> get_output() = 0;
 
-    virtual void set_fd(const FileDescriptor::shared_ptr& fd) = 0;
+    virtual void set_fd(const FD::shared_ptr& fd) = 0;
   };
 
   using output_spec_type =
@@ -65,7 +65,7 @@ struct SubProcess {
   using input_spec_type = std::variant<DefaultIO, Pipe::ptr, FilePath>;
 
   struct CreateProcessArgs {
-    const std::string cmd;
+    const FilePath cmd;
     const std::vector<std::string> args = {};
     input_spec_type stdin_spec = DefaultIO{};
     output_spec_type stdout_spec = DefaultIO{};
@@ -87,13 +87,13 @@ struct SubProcess {
 
   static OrError<ptr> spawn(const CreateProcessArgs& args);
 
-  static OrError<Unit> run(const CreateProcessArgs& args);
+  static OrError<> run(const CreateProcessArgs& args);
 
   static OrError<std::optional<ProcessStatus>> wait_any(bool block);
 
-  OrError<Unit> wait();
+  OrError<> wait();
 
-  OrError<Unit> kill();
+  OrError<> kill();
 
   explicit SubProcess(Pid pid);
 
