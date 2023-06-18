@@ -1,5 +1,6 @@
 #include "testing.hpp"
 
+#include "error.hpp"
 #include "format.hpp"
 
 using std::vector;
@@ -27,10 +28,10 @@ void run_tests()
       P("=================================================================="
         "==============");
       P("Test: $", t.name);
-      try {
-        t.t();
-      } catch (const std::exception& exn) {
-        P("Exception raised by test: $", exn.what());
+      auto err = try_with([&]() { t.t(); });
+      if (err.is_error()) {
+        P("Exception raised by test");
+        P(err.error().full_msg());
       }
       P("");
     }

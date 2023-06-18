@@ -28,30 +28,20 @@ Error::Error(string&& msg)
     : _messages({{.message = std::move(msg), .location = nullopt}})
 {}
 
-Error::Error(const std::exception& exception)
-    : _messages({{.message = exception.what(), .location = nullopt}})
+Error::Error(const bee::Exn& exn)
+    : _messages({{.message = exn.what(), .location = exn.loc()}})
 {}
 
-Error::Error(const char* filename, int line, const string& msg)
-    : _messages({{
-        .message = msg,
-        .location =
-          ErrorLocation{
-            .filename = filename,
-            .line = line,
-          },
-      }})
+Error::Error(const std::exception& exn)
+    : _messages({{.message = exn.what(), .location = nullopt}})
 {}
 
-Error::Error(const char* filename, int line, string&& msg)
-    : _messages({{
-        .message = std::move(msg),
-        .location =
-          ErrorLocation{
-            .filename = filename,
-            .line = line,
-          },
-      }})
+Error::Error(const Location& loc, const string& msg)
+    : _messages({{.message = msg, .location = loc}})
+{}
+
+Error::Error(const Location& loc, string&& msg)
+    : _messages({{.message = std::move(msg), .location = loc}})
 {}
 
 string Error::msg() const
@@ -85,7 +75,7 @@ void Error::print_error() const { PE(full_msg()); }
 
 const deque<ErrorMessage>& Error::messages() const { return _messages; }
 
-void Error::raise() const { throw(std::runtime_error(full_msg())); }
+void Error::raise() const { throw(bee::Exn(full_msg())); }
 
 void Error::add_tag(string&& msg)
 {
@@ -97,23 +87,20 @@ void Error::add_tag(const string& msg) { add_tag(string(msg)); }
 
 void Error::add_tag(const char* tag) { add_tag(string(tag)); }
 
-void Error::add_tag_with_location(const char* filename, int line, string&& msg)
+void Error::add_tag_with_location(const Location& loc, string&& msg)
 {
-  _messages.emplace_front(ErrorMessage{
-    .message = std::move(msg),
-    .location = ErrorLocation{.filename = filename, .line = line}});
+  _messages.emplace_front(
+    ErrorMessage{.message = std::move(msg), .location = loc});
 }
 
-void Error::add_tag_with_location(
-  const char* filename, int line, const string& msg)
+void Error::add_tag_with_location(const Location& loc, const string& msg)
 {
-  add_tag_with_location(filename, line, string(msg));
+  add_tag_with_location(loc, string(msg));
 }
 
-void Error::add_tag_with_location(
-  const char* filename, int line, const char* msg)
+void Error::add_tag_with_location(const Location& loc, const char* msg)
 {
-  add_tag_with_location(filename, line, string(msg));
+  add_tag_with_location(loc, string(msg));
 }
 
 } // namespace bee

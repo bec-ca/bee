@@ -16,14 +16,14 @@ namespace {
   auto var = (syscall);                                                        \
   if (var < 0) {                                                               \
     auto err = Error::fmt("$", strerror(errno));                               \
-    err.add_tag_with_location(__FILE__, __LINE__, maybe_format(msg));          \
+    err.add_tag_with_location(HERE, maybe_format(msg));                        \
     return err;                                                                \
   }
 
 #define bail_syscall_unit(syscall, msg...)                                     \
   if ((syscall) < 0) {                                                         \
     auto err = Error::fmt("$", strerror(errno));                               \
-    err.add_tag_with_location(__FILE__, __LINE__, maybe_format(msg));          \
+    err.add_tag_with_location(HERE, maybe_format(msg));                        \
     return err;                                                                \
   }
 

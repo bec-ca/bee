@@ -9,28 +9,26 @@
 #include <type_traits>
 #include <variant>
 
+#include "exn.hpp"
 #include "format.hpp"
+#include "location.hpp"
 #include "unit.hpp"
 
 namespace bee {
 
-struct ErrorLocation {
-  std::string filename;
-  int line;
-};
-
 struct ErrorMessage {
   std::string message;
-  std::optional<ErrorLocation> location;
+  std::optional<Location> location;
 };
 
 struct Error {
-  explicit Error(const char* filename, int line, const std::string& msg);
-  explicit Error(const char* filename, int line, std::string&& msg);
+  explicit Error(const Location& loc, const std::string& msg);
+  explicit Error(const Location& loc, std::string&& msg);
   explicit Error(const char* msg);
   explicit Error(const std::string& msg);
   explicit Error(std::string&& msg);
-  explicit Error(const std::exception& exception);
+  explicit Error(const bee::Exn& exn);
+  explicit Error(const std::exception& exn);
 
   Error(const Error& error);
   Error(Error&& error);
@@ -65,10 +63,9 @@ struct Error {
     }
   }
 
-  void add_tag_with_location(
-    const char* filename, int line, const std::string& tag);
-  void add_tag_with_location(const char* filename, int line, std::string&& tag);
-  void add_tag_with_location(const char* filename, int line, const char* tag);
+  void add_tag_with_location(const Location& loc, const std::string& tag);
+  void add_tag_with_location(const Location& loc, std::string&& tag);
+  void add_tag_with_location(const Location& loc, const char* tag);
 
  private:
   std::deque<ErrorMessage> _messages;
@@ -129,7 +126,8 @@ template <class T = void> struct OrError {
   OrError(const Error& msg) : _value(std::in_place_index<1>, msg) {}
   OrError(Error&& msg) : _value(std::in_place_index<1>, std::move(msg)) {}
 
-  OrError(const std::exception& exception) : _value(Error(exception)) {}
+  OrError(const bee::Exn& exn) : _value(Error(exn)) {}
+  OrError(const std::exception& exn) : _value(Error(exn)) {}
 
   template <std::convertible_to<T> U>
   OrError(const OrError<U>& other)
@@ -359,8 +357,7 @@ template <class T = void> struct OrError {
   void _raise_if_not_error() const
   {
     if (!is_error()) {
-      throw std::runtime_error(
-        "OrError::error called on instance that is not an error");
+      throw bee::Exn("OrError::error called on instance that is not an error");
     }
   }
 
@@ -386,7 +383,14 @@ template <class T> constexpr OrError<T> ok(T&& value)
 template <class F, class R = std::invoke_result_t<F>> OrError<R> try_with(F&& f)
 {
   try {
-    return OrError<R>(ok(), f());
+    if constexpr (std::is_void_v<R>) {
+      f();
+      return ok();
+    } else {
+      return OrError<R>(ok(), f());
+    }
+  } catch (const bee::Exn& exn) {
+    return OrError<R>(Error(exn));
   } catch (const std::exception& exn) {
     return OrError<R>(Error(exn));
   }
@@ -401,18 +405,15 @@ template <class... Ts> std::string maybe_format(Ts&&... args)
 
 #define shot(msg...)                                                           \
   do {                                                                         \
-    return bee::Error(__FILE__, __LINE__, bee::maybe_format(msg));             \
+    return bee::Error(HERE, bee::maybe_format(msg));                           \
   } while (false)
 
-#define raise_error(msg...)                                                    \
-  bee::Error(__FILE__, __LINE__, bee::maybe_format(msg)).raise();
+#define raise_error(msg...) bee::Error(HERE, bee::maybe_format(msg)).raise();
 
 #define bail(var, or_error, msg...)                                            \
   auto __var##var = (or_error);                                                \
   if ((__var##var).is_error()) {                                               \
-    (__var##var)                                                               \
-      .error()                                                                 \
-      .add_tag_with_location(__FILE__, __LINE__, bee::maybe_format(msg));      \
+    (__var##var).error().add_tag_with_location(HERE, bee::maybe_format(msg));  \
     return std::move(__var##var).error();                                      \
   }                                                                            \
   auto& var = (__var##var).value();
@@ -420,9 +421,7 @@ template <class... Ts> std::string maybe_format(Ts&&... args)
 #define log_and_return_void(var, or_error, msg...)                             \
   auto __var##var = (or_error);                                                \
   if ((__var##var).is_error()) {                                               \
-    (__var##var)                                                               \
-      .error()                                                                 \
-      .add_tag_with_location(__FILE__, __LINE__, bee::maybe_format(msg));      \
+    (__var##var).error().add_tag_with_location(HERE, bee::maybe_format(msg));  \
     (__var##var).error().print_error();                                        \
     return;                                                                    \
   }                                                                            \
@@ -430,8 +429,7 @@ template <class... Ts> std::string maybe_format(Ts&&... args)
 
 #define bail_lhv(var, or_error, msg...)                                        \
   if ((or_error).is_error()) {                                                 \
-    (or_error).error().add_tag_with_location(                                  \
-      __FILE__, __LINE__, bee::maybe_format(msg));                             \
+    (or_error).error().add_tag_with_location(HERE, bee::maybe_format(msg));    \
     return std::move(or_error).error();                                        \
   }                                                                            \
   auto& var = (or_error).value();
@@ -440,8 +438,7 @@ template <class... Ts> std::string maybe_format(Ts&&... args)
   do {                                                                         \
     auto __var = (or_error);                                                   \
     if (__var.is_error()) {                                                    \
-      __var.error().add_tag_with_location(                                     \
-        __FILE__, __LINE__, bee::maybe_format(msg));                           \
+      __var.error().add_tag_with_location(HERE, bee::maybe_format(msg));       \
       return __var.error();                                                    \
     }                                                                          \
     var = std::move(__var).value();                                            \
@@ -450,9 +447,7 @@ template <class... Ts> std::string maybe_format(Ts&&... args)
 #define must(var, or_error, msg...)                                            \
   auto __var##var = (or_error);                                                \
   if ((__var##var).is_error()) {                                               \
-    (__var##var)                                                               \
-      .error()                                                                 \
-      .add_tag_with_location(__FILE__, __LINE__, bee::maybe_format(msg));      \
+    (__var##var).error().add_tag_with_location(HERE, bee::maybe_format(msg));  \
     (__var##var).error().raise();                                              \
   }                                                                            \
   auto& var = (__var##var).value();
@@ -461,8 +456,7 @@ template <class... Ts> std::string maybe_format(Ts&&... args)
   do {                                                                         \
     auto __var = (or_error);                                                   \
     if (__var.is_error()) {                                                    \
-      (__var).error().add_tag_with_location(                                   \
-        __FILE__, __LINE__, bee::maybe_format(msg));                           \
+      (__var).error().add_tag_with_location(HERE, bee::maybe_format(msg));     \
       (__var).error().raise();                                                 \
     }                                                                          \
     var = std::move(__var).value();                                            \
@@ -472,8 +466,7 @@ template <class... Ts> std::string maybe_format(Ts&&... args)
   do {                                                                         \
     auto __var = (or_error);                                                   \
     if (__var.is_error()) {                                                    \
-      __var.error().add_tag_with_location(                                     \
-        __FILE__, __LINE__, bee::maybe_format(msg));                           \
+      __var.error().add_tag_with_location(HERE, bee::maybe_format(msg));       \
       __var.error().print_error();                                             \
     }                                                                          \
   } while (false)
@@ -482,8 +475,7 @@ template <class... Ts> std::string maybe_format(Ts&&... args)
   do {                                                                         \
     auto __var = (or_error);                                                   \
     if (__var.is_error()) {                                                    \
-      __var.error().add_tag_with_location(                                     \
-        __FILE__, __LINE__, bee::maybe_format(msg));                           \
+      __var.error().add_tag_with_location(HERE, bee::maybe_format(msg));       \
       return std::move(__var).error();                                         \
     }                                                                          \
   } while (false)
@@ -492,8 +484,7 @@ template <class... Ts> std::string maybe_format(Ts&&... args)
   do {                                                                         \
     auto __var = (or_error);                                                   \
     if (__var.is_error()) {                                                    \
-      __var.error().add_tag_with_location(                                     \
-        __FILE__, __LINE__, bee::maybe_format(msg));                           \
+      __var.error().add_tag_with_location(HERE, bee::maybe_format(msg));       \
       __var.error().raise();                                                   \
     }                                                                          \
   } while (false)

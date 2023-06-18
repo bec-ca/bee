@@ -64,7 +64,9 @@ cpp_library:
   sources: error.cpp
   headers: error.hpp
   libs:
+    exn
     format
+    location
     unit
 
 cpp_test:
@@ -75,6 +77,12 @@ cpp_test:
     format
     testing
   output: error_test.out
+
+cpp_library:
+  name: exn
+  sources: exn.cpp
+  headers: exn.hpp
+  libs: location
 
 cpp_library:
   name: fd
@@ -165,7 +173,10 @@ cpp_library:
   name: format
   sources: format.cpp
   headers: format.hpp
-  libs: to_string
+  libs:
+    exn
+    location
+    to_string
 
 cpp_library:
   name: format_array
@@ -239,6 +250,10 @@ cpp_library:
     fixed_rstring
     format_params
     to_string_t
+
+cpp_library:
+  name: location
+  headers: location.hpp
 
 cpp_library:
   name: nref
@@ -370,7 +385,9 @@ cpp_library:
   name: testing
   sources: testing.cpp
   headers: testing.hpp
-  libs: format
+  libs:
+    error
+    format
 
 cpp_library:
   name: time

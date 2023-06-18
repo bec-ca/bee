@@ -4,6 +4,8 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "exn.hpp"
+
 using std::cerr;
 using std::cout;
 using std::flush;
@@ -24,42 +26,35 @@ void print_err_str(string str)
   cerr << str << flush;
 }
 
-void raise_exn(const char* file, int line, const char* format, const char* msg)
+void raise_exn(const Location& loc, const char* fmt, const char* msg)
 {
-  throw std::runtime_error(
-    std::string(file) + ":" + std::to_string(line) + ": " + std::string(msg) +
-    ": '" + format + "'");
+  throw Exn(loc, std::string(msg) + ": '" + fmt + "'");
 }
 
 void write_one_rec(
-  const char* file,
-  int line,
-  const char* format,
-  int,
-  const FormatParams&,
-  std::string&)
+  const Location& loc, const char* fmt, int, const FormatParams&, std::string&)
 {
-  raise_exn(file, line, format, "Extra formats in format string");
+  raise_exn(loc, fmt, "Extra formats in format string");
 }
 
 std::optional<FormatParams> get_next_format(
-  const char* file, int line, std::string& output, const char* format, int& idx)
+  const Location& loc, std::string& output, const char* fmt, int& idx)
 {
-  while (format[idx]) {
+  while (fmt[idx]) {
     FormatParams params;
-    if ((format[idx] == '$' && format[idx + 1] != '$')) {
+    if ((fmt[idx] == '$' && fmt[idx + 1] != '$')) {
       idx++;
       return FormatParams();
-    } else if (format[idx] == '$' && format[idx + 1] == '$') {
+    } else if (fmt[idx] == '$' && fmt[idx + 1] == '$') {
       output += '$';
       idx += 2;
-    } else if (format[idx] == '{' && format[idx + 1] == '{') {
+    } else if (fmt[idx] == '{' && fmt[idx + 1] == '{') {
       output += '{';
       idx += 2;
-    } else if (format[idx] == '{') {
+    } else if (fmt[idx] == '{') {
       idx++;
-      while (format[idx] && format[idx] != '}') {
-        switch (format[idx]) {
+      while (fmt[idx] && fmt[idx] != '}') {
+        switch (fmt[idx]) {
         case ',': {
           params.comma = true;
           idx++;
@@ -68,8 +63,8 @@ std::optional<FormatParams> get_next_format(
         case '.': {
           idx++;
           int places = 0;
-          while (isdigit(format[idx])) {
-            places = places * 10 + (format[idx] - '0');
+          while (isdigit(fmt[idx])) {
+            places = places * 10 + (fmt[idx] - '0');
             idx++;
           }
           params.decimal_places = places;
@@ -91,17 +86,17 @@ std::optional<FormatParams> get_next_format(
           break;
         }
         default: {
-          raise_exn(file, line, format, "Unexpected character in format");
+          raise_exn(loc, fmt, "Unexpected character in format");
         }
         }
       }
-      if (format[idx] == 0) {
-        raise_exn(file, line, format, "Format string ended unexpectedly");
+      if (fmt[idx] == 0) {
+        raise_exn(loc, fmt, "Format string ended unexpectedly");
       }
       idx++;
       return params;
     } else {
-      output += format[idx];
+      output += fmt[idx];
       idx++;
     }
   }

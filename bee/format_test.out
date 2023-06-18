@@ -139,11 +139,11 @@ t(1000000) -> +1,000,000
 
 ================================================================================
 Test: raise_on_format_error
-Error(./bee/format_test.cpp:140: Format string ended unexpectedly: '{')
-Error(./bee/format_test.cpp:140: Unexpected character in format: '{6}')
-Error(./bee/format_test.cpp:140: Extra formats in format string: '{}')
-Error(./bee/format_test.cpp:140: Extra formats in format string: '$')
-Error(./bee/format_test.cpp:140: Extra arguments in format: '$')
+Error(Format string ended unexpectedly: '{')
+Error(Unexpected character in format: '{6}')
+Error(Extra formats in format string: '{}')
+Error(Extra formats in format string: '$')
+Error(Extra arguments in format: '$')
 
 ================================================================================
 Test: float_exponential_notation
