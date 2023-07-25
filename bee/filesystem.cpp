@@ -90,6 +90,16 @@ OrError<> FileSystem::remove(const FilePath& path)
   return ok();
 }
 
+OrError<> FileSystem::remove_all(const FilePath& path)
+{
+  error_code ec;
+  fs::remove_all(path.to_std_path(), ec);
+  if (ec) {
+    return Error::fmt("Failed to remove all files '$': $", path, ec.message());
+  }
+  return ok();
+}
+
 OrError<> FileSystem::touch_file(const FilePath& filename)
 {
   ofstream output(filename.to_std_path());
