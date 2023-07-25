@@ -18,17 +18,17 @@ namespace to_string_t_details {
 
 template <class T>
 concept has_to_string = requires(const T& t) {
-                          {
-                            t.to_string()
-                            } -> std::convertible_to<std::string>;
-                        };
+  {
+    t.to_string()
+  } -> std::convertible_to<std::string>;
+};
 
 template <class T>
 concept has_to_string_with_params =
   requires(const T& t, const FormatParams& p) {
     {
       t.to_string(p)
-      } -> std::convertible_to<std::string>;
+    } -> std::convertible_to<std::string>;
   };
 
 } // namespace to_string_t_details

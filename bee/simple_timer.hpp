@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <vector>
 
@@ -26,17 +27,17 @@ struct SimpleTimer {
     void add_call(const bee::Span& duration);
 
     bee::Span total_time() const;
-    int call_count() const;
+    int64_t call_count() const;
 
     const std::string& name() const;
 
     void reset();
 
    private:
-    std::string _name;
+    const std::string _name;
 
-    bee::Span _total_time = bee::Span::zero();
-    int64_t _call_count = 0;
+    std::atomic<bee::Span> _total_time = bee::Span::zero();
+    std::atomic<int64_t> _call_count = 0;
   };
 
   struct Scoped {

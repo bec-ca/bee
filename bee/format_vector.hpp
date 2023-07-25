@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "format.hpp"
 #include "to_string_t.hpp"
 
 namespace bee {
@@ -14,4 +15,4 @@ template <class T> struct to_string_t<std::vector<T>> {
   }
 };
 
-}; // namespace bee
+} // namespace bee

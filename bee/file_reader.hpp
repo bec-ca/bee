@@ -21,6 +21,9 @@ struct FileReader final : public Reader {
   static OrError<std::vector<std::byte>> read_file_bytes(
     const FilePath& filename);
 
+  static OrError<std::vector<std::string>> read_file_lines(
+    const FilePath& filename);
+
   FileReader(const FileReader&) = delete;
   FileReader(FileReader&& other) = delete;
   FileReader& operator=(const FileReader&) = delete;

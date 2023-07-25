@@ -7,10 +7,10 @@ namespace bee {
 
 template <class F>
 concept has_type_name = requires(F f) {
-                          {
-                            F::type_name()
-                            } -> std::convertible_to<const char*>;
-                        };
+  {
+    F::type_name()
+  } -> std::convertible_to<const char*>;
+};
 
 template <class T> struct TypeName;
 

@@ -3,6 +3,7 @@
 #include <string>
 #include <variant>
 
+#include "format.hpp"
 #include "to_string_t.hpp"
 #include "type_name.hpp"
 

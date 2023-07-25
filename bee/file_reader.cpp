@@ -203,6 +203,12 @@ OrError<string> FileReader::read_file(const FilePath& filename)
   return reader->read_all();
 }
 
+OrError<vector<string>> FileReader::read_file_lines(const FilePath& filename)
+{
+  bail(reader, FileReader::open(filename));
+  return reader->read_all_lines();
+}
+
 OrError<vector<std::byte>> FileReader::read_file_bytes(const FilePath& filename)
 {
   bail(reader, FileReader::open(filename));
