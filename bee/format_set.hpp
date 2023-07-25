@@ -3,6 +3,7 @@
 #include <set>
 #include <string>
 
+#include "format.hpp"
 #include "to_string_t.hpp"
 
 namespace bee {

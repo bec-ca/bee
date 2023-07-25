@@ -10,17 +10,17 @@ namespace bee {
 
 template <class T>
 concept convertible_to_string = requires(const T& t) {
-                                  {
-                                    to_string_t<std::decay_t<T>>::convert(t)
-                                    } -> std::convertible_to<std::string>;
-                                };
+  {
+    to_string_t<std::decay_t<T>>::convert(t)
+  } -> std::convertible_to<std::string>;
+};
 
 template <class T>
 concept convertible_to_string_with_params =
   requires(const T& t, const FormatParams& p) {
     {
       to_string_t<std::decay_t<T>>::convert(t, p)
-      } -> std::convertible_to<std::string>;
+    } -> std::convertible_to<std::string>;
   };
 
 template <class T>

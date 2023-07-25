@@ -90,10 +90,10 @@ concept or_error = is_or_error_t<T>::value;
 
 template <class F, class T>
 concept or_error_bind_fn = requires(const F& f, T&& t) {
-                             {
-                               f(std::forward<T>(t))
-                               } -> or_error;
-                           };
+  {
+    f(std::forward<T>(t))
+  } -> or_error;
+};
 
 } // namespace details
 

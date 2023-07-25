@@ -10,12 +10,15 @@ SimpleTimer::Timer::Timer(const std::string& name) : _name(name) {}
 
 void SimpleTimer::Timer::add_call(const bee::Span& duration)
 {
-  _call_count++;
-  _total_time += duration;
+  _call_count.fetch_add(1);
+  while (true) {
+    auto tt = _total_time.load();
+    if (_total_time.compare_exchange_strong(tt, tt + duration)) { break; }
+  }
 }
 
 bee::Span SimpleTimer::Timer::total_time() const { return _total_time; }
-int SimpleTimer::Timer::call_count() const { return _call_count; }
+int64_t SimpleTimer::Timer::call_count() const { return _call_count; }
 const std::string& SimpleTimer::Timer::name() const { return _name; }
 
 void SimpleTimer::Timer::reset()

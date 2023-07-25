@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "bee/format.hpp"
+
 namespace bee {
 
 struct test_info {
