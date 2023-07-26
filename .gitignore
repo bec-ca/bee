@@ -3,3 +3,5 @@ build
 *.o
 *.d
 .bootstrap
+.staging
+mellow-with-deps.tar.gz
