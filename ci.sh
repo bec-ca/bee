@@ -25,4 +25,4 @@ if ! [ -f $MELLOW ]; then
   build_bootstrap
 fi
 
-make
+PROFILE=release make
