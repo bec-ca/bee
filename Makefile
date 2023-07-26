@@ -1,4 +1,6 @@
+MELLOW ?= mellow
+
 .PHONY: build
 
 build:
-	mellow build
+	$(MELLOW) build
