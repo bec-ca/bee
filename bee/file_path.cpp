@@ -44,6 +44,8 @@ bool FilePath::is_child_of(const FilePath& other) const
   return other.is_parent_of(*this);
 }
 
+bool FilePath::empty() const { return _path.empty(); }
+
 // static constructors
 
 FilePath FilePath::of_string(const std::string& path) { return FilePath(path); }
@@ -75,6 +77,12 @@ FilePath FilePath::operator/(const FilePath& tail) const
 FilePath& FilePath::operator/=(const string& tail)
 {
   if (!tail.empty()) { _path /= tail; }
+  return *this;
+}
+
+FilePath& FilePath::operator/=(const FilePath& tail)
+{
+  if (!tail.empty()) { _path /= tail.to_std_path(); }
   return *this;
 }
 

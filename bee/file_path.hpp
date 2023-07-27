@@ -37,12 +37,14 @@ struct FilePath {
   bool is_parent_of(const FilePath& path) const;
   bool is_child_of(const FilePath& path) const;
 
+  bool empty() const;
+
   // static constructors
 
   static FilePath of_string(const std::string& path);
-  static FilePath of_std_path(const fs::path& path);
-
   static FilePath of_string(std::string&& path);
+
+  static FilePath of_std_path(const fs::path& path);
   static FilePath of_std_path(fs::path&& path);
 
   // operators
@@ -51,6 +53,7 @@ struct FilePath {
   FilePath operator/(const FilePath& tail) const;
 
   FilePath& operator/=(const std::string& tail);
+  FilePath& operator/=(const FilePath& tail);
 
   FilePath operator+(const std::string& suffix) const;
 

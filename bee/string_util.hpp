@@ -10,6 +10,9 @@ namespace bee {
 
 std::vector<std::string> split(const std::string& str, const std::string& sep);
 
+// Split string by spaces characters. Consecutive spaces are treated as a
+// single space, leading and trailing spaces are ignored. Space characters
+// include regular space, tab, new line, etc.
 std::vector<std::string> split_space(
   const std::string& str,
   const int max_parts = std::numeric_limits<int>::max());
