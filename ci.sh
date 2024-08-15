@@ -4,6 +4,7 @@ ls llvm/bin
 
 export CXX=clang
 export PATH="$PWD/llvm/bin:$PATH"
+LD_LIBRARY_PATH="$PWD/llvm/bin:$LD_LIBRARY_PATH"
 
 if command -v clang-format-18; then
   export CLANG_FORMAT=clang-format-18
