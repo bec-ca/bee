@@ -1,5 +1,9 @@
 #!/bin/bash -eu
 
+ls llvm
+
+export PATH=llvm/bin:$PATH
+
 if command -v clang-format-18; then
   export CLANG_FORMAT=clang-format-18
 fi
