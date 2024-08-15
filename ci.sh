@@ -2,6 +2,7 @@
 
 ls llvm/bin
 
+export CXX=clang
 export PATH="$PWD/llvm/bin:$PATH"
 
 if command -v clang-format-18; then
