@@ -1,6 +1,7 @@
 #!/bin/bash -eux
 
-ls llvm/bin
+ls llvm
+find llvm | grep libtinfo.so.5
 
 export CXX=clang
 export PATH="$PWD/llvm/bin:$PATH"
