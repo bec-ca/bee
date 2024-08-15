@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "bee/format.hpp"
+#include "bee/print.hpp"
 
 namespace bee {
 
@@ -24,6 +25,6 @@ int add_to_tests(std::function<void()> f, const std::string& name);
   }                                                                            \
   void test_##name()
 
-#define PRINT_EXPR(v) P("$ -> $", #v, v);
+#define PRINT_EXPR(v) P("$ -> '$'", #v, v);
 
 } // namespace bee

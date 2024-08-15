@@ -1,5 +1,7 @@
 #include "string_writer.hpp"
 
+#include <memory>
+
 using std::make_shared;
 using std::string;
 
@@ -9,12 +11,13 @@ StringWriter::~StringWriter() {}
 
 StringWriter::ptr StringWriter::create() { return make_shared<StringWriter>(); }
 
-void StringWriter::close() {}
+bool StringWriter::close() { return true; }
 
-OrError<> StringWriter::write(const string& data)
+OrError<size_t> StringWriter::write_raw(const std::byte* data, size_t size)
 {
-  _content += data;
-  return ok();
+  auto c = reinterpret_cast<const char*>(data);
+  _content.insert(_content.end(), c, c + size);
+  return size;
 }
 
 string& StringWriter::content() { return _content; }

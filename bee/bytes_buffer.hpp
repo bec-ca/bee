@@ -24,7 +24,7 @@ struct BytesBuffer {
     for (size_t i = 0; i < size; i++) { _data.push_back(data[i]); }
   }
 
-  const std::vector<std::byte> data() const noexcept { return _data; }
+  const std::vector<std::byte>& data() const noexcept { return _data; }
 
   const std::byte* raw_data() const noexcept { return _data.data(); }
 

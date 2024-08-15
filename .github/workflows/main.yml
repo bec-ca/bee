@@ -8,18 +8,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install deps
+        run: |
+            wget https://apt.llvm.org/llvm.sh
+            chmod +x llvm.sh
+            sudo ./llvm.sh 18
+            sudo apt-get install -y clang-format-18 clang-18
+
       - name: Cache
         uses: actions/cache@v3
         with:
             path: build
-            key: ${{ runner.os }}-build
-
-      - name: Install clang-format16
-        run: |
-            wget https://apt.llvm.org/llvm.sh
-            chmod +x llvm.sh
-            sudo ./llvm.sh 16
-            sudo apt-get install clang-format-16
+            key: build-${{ runner.os }}-${{ github.run_id }}
+            restore-keys: |
+                build-${{ runner.os }}-
 
       - name: Run tests
         run: ./ci.sh

@@ -1,0 +1,55 @@
+================================================================================
+Test: map_lvalue
+hello hello 
+Error(Error!)
+
+================================================================================
+Test: map_rvalue
+hello hello 
+Error(Error!)
+
+================================================================================
+Test: map_lvalue_diff_type
+6
+Error(Error!)
+
+================================================================================
+Test: map_rvalue_diff_type
+6
+Error(Error!)
+
+================================================================================
+Test: bind_lvalue
+hello hello 
+Error(Error1!)
+Error(Error2 hello )
+Error(Error1!)
+
+================================================================================
+Test: tag
+Error(trying something: It didn't work!)
+
+================================================================================
+Test: compile_error
+Error(Error1!)
+
+================================================================================
+Test: bail_unit
+f() -> 'Error(Test error)'
+
+================================================================================
+Test: try_with
+try_with([&]() -> OrError<Unit> { return Error("foo"); }) -> 'Error(foo)'
+try_with([&]() -> OrError<Unit> { throw std::runtime_error("boop"); }) -> 'Error(Exn raised: boop)'
+
+================================================================================
+Test: void_value
+[]() -> OrError<void> { return ok(); }() -> 'Ok'
+[]() -> OrError<void> { return Error("failed"); }() -> 'Error(failed)'
+
+================================================================================
+Test: return_copy
+neither
+moved
+moved
+

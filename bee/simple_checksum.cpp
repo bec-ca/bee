@@ -1,6 +1,6 @@
 #include "simple_checksum.hpp"
 
-#include "hex.hpp"
+#include "print.hpp"
 
 using std::string;
 
@@ -39,7 +39,7 @@ void SimpleChecksum::force_flush()
 string SimpleChecksum::hex()
 {
   force_flush();
-  return Hex::of_uint64(_acc);
+  return F("{08x}", _acc);
 }
 
 string SimpleChecksum::string_checksum(const string& content)

@@ -5,9 +5,9 @@
 #include <variant>
 #include <vector>
 
-#include "error.hpp"
 #include "fd.hpp"
 #include "file_path.hpp"
+#include "or_error.hpp"
 #include "time.hpp"
 
 namespace bee {
@@ -49,20 +49,26 @@ struct SubProcess {
   struct OutputToString {
    public:
     using ptr = std::shared_ptr<OutputToString>;
-
     static ptr create();
-
     virtual ~OutputToString();
-
     virtual OrError<std::string> get_output() = 0;
+    virtual void set_fd(const FD::shared_ptr& fd) = 0;
+  };
 
+  struct InputFromString {
+   public:
+    using ptr = std::shared_ptr<InputFromString>;
+    static ptr create(const std::string_view& input);
+    virtual ~InputFromString();
+    virtual bee::OrError<> result() = 0;
     virtual void set_fd(const FD::shared_ptr& fd) = 0;
   };
 
   using output_spec_type =
     std::variant<DefaultIO, Pipe::ptr, FilePath, OutputToString::ptr>;
 
-  using input_spec_type = std::variant<DefaultIO, Pipe::ptr, FilePath>;
+  using input_spec_type =
+    std::variant<DefaultIO, Pipe::ptr, FilePath, InputFromString::ptr>;
 
   struct CreateProcessArgs {
     const FilePath cmd;
@@ -78,6 +84,7 @@ struct SubProcess {
   struct ProcessStatus {
     ptr proc;
     int exit_status;
+    bee::OrError<> to_or_error() const;
   };
 
   SubProcess(const SubProcess& other) = delete;
@@ -87,13 +94,13 @@ struct SubProcess {
 
   static OrError<ptr> spawn(const CreateProcessArgs& args);
 
-  static OrError<> run(const CreateProcessArgs& args);
+  [[nodiscard]] static OrError<> run(const CreateProcessArgs& args);
 
   static OrError<std::optional<ProcessStatus>> wait_any(bool block);
 
-  OrError<> wait();
+  [[nodiscard]] OrError<> wait();
 
-  OrError<> kill();
+  [[nodiscard]] OrError<> kill();
 
   explicit SubProcess(Pid pid);
 

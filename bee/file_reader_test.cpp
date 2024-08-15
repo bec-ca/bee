@@ -7,7 +7,7 @@ using std::string;
 namespace bee {
 namespace {
 
-FilePath tmp_filename = FilePath::of_string("/tmp/tmp2");
+const FilePath tmp_filename("/tmp/tmp2");
 
 string create_content()
 {
@@ -23,7 +23,7 @@ string create_content()
 TEST(basic)
 {
   string content = create_content();
-  must_unit(FileWriter::save_file(tmp_filename, content));
+  must_unit(FileWriter::write_file(tmp_filename, content));
   must(content_read, FileReader::read_file(tmp_filename));
   P(content_read == content);
   P(content.size());
@@ -32,13 +32,14 @@ TEST(basic)
 TEST(read_by_blocks)
 {
   string content = create_content();
-  must_unit(FileWriter::save_file(tmp_filename, content));
+  must_unit(FileWriter::write_file(tmp_filename, content));
   must(file, FileReader::open(tmp_filename));
   string content_read;
   char buf[1024];
-  while (!file->is_eof()) {
+  while (true) {
     must(
       bytes_read, file->read(reinterpret_cast<std::byte*>(buf), sizeof(buf)));
+    if (bytes_read == 0) { break; }
     content_read.append(buf, bytes_read);
   }
   P(content_read == content);

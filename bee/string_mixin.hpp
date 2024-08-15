@@ -7,15 +7,21 @@ namespace bee {
 
 template <class T> struct StringMixin {
  public:
-  static T of_string(const std::string& str) { return T(str); }
-  static T of_string(std::string&& str) { return T(std::move(str)); }
+  template <class U>
+    requires std::constructible_from<std::string, U>
+  static T of_string(U&& str)
+  {
+    return static_cast<T>(std::forward<U>(str));
+  }
 
   const std::string& to_string() const { return _str; }
 
   std::strong_ordering operator<=>(const StringMixin& other) const = default;
 
-  explicit StringMixin(const std::string& str) : _str(str) {}
-  explicit StringMixin(std::string&& str) : _str(std::move(str)) {}
+  template <class U>
+    requires std::constructible_from<std::string, U>
+  explicit StringMixin(U&& str) : _str(std::forward<U>(str))
+  {}
 
  private:
   std::string _str;

@@ -3,19 +3,23 @@
 #include <memory>
 #include <vector>
 
-#include "error.hpp"
+#include "fd.hpp"
 #include "file_path.hpp"
+#include "or_error.hpp"
 #include "reader.hpp"
 
 namespace bee {
-
-struct FD;
 
 struct FileReader final : public Reader {
  public:
   using ptr = std::unique_ptr<FileReader>;
 
+  FileReader(FD::shared_ptr&& fd);
+  FileReader(const FD::shared_ptr& fd);
+
   static OrError<ptr> open(const FilePath& filename);
+
+  static ptr from_fd(const FD::shared_ptr& fd);
 
   static OrError<std::string> read_file(const FilePath& filename);
   static OrError<std::vector<std::byte>> read_file_bytes(
@@ -29,13 +33,9 @@ struct FileReader final : public Reader {
   FileReader& operator=(const FileReader&) = delete;
   FileReader& operator=(FileReader&&) = delete;
 
-  virtual ~FileReader();
+  virtual ~FileReader() noexcept;
 
-  OrError<size_t> read(std::byte* buffer, size_t size);
-  OrError<size_t> read(std::vector<std::byte>& buffer, size_t size);
-  virtual OrError<std::string> read_str(size_t size) override;
-
-  OrError<std::string> read_line();
+  OrError<std::optional<std::string>> read_line();
   OrError<std::vector<std::string>> read_all_lines();
 
   OrError<std::string> read_all();
@@ -44,12 +44,16 @@ struct FileReader final : public Reader {
 
   virtual OrError<size_t> remaining_bytes() override;
 
-  virtual bool is_eof() override;
+  virtual bool close() override;
 
-  virtual void close() override;
+  static FileReader& stdin_reader();
+
+ protected:
+  [[nodiscard]] virtual OrError<size_t> read_raw(
+    std::byte* buffer, size_t size) override;
 
  private:
-  FileReader(FD&& fd);
+  template <class T> OrError<T> _read_all_gen();
 
   size_t _available_on_buffer() const;
   bool _buffer_has_data() const;
@@ -62,9 +66,11 @@ struct FileReader final : public Reader {
   const std::byte* buffer_end() const;
   void clear_buffer();
 
-  std::unique_ptr<FD> _fd;
+  static constexpr size_t BufferSize = 1 << 13;
+
+  FD::shared_ptr _fd;
   size_t _buffer_pos = 0;
-  std::byte _buffer[1 << 13];
+  std::byte _buffer[BufferSize];
   size_t _buffer_size = 0;
   bool _eof = false;
   std::optional<Error> _last_error;

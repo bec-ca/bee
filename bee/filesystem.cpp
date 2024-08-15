@@ -6,6 +6,9 @@
 #include <queue>
 #include <ratio>
 
+#include <unistd.h>
+
+#include "errno_msg.hpp"
 #include "file_path.hpp"
 #include "file_reader.hpp"
 #include "file_writer.hpp"
@@ -26,14 +29,17 @@ OrError<vector<FilePath>> list_regular_files_impl(
 {
   vector<FilePath> output;
   std::queue<FilePath> queue;
-  queue.push(FilePath::of_string(""));
+  queue.push(FilePath(""));
   while (!queue.empty()) {
     auto dir = queue.front();
     queue.pop();
     error_code ec;
-    for (const auto& p :
-         fs::directory_iterator((base_dir / dir).to_std_path(), ec)) {
-      auto path = FilePath::of_std_path(p.path());
+    auto entries = fs::directory_iterator((base_dir / dir).to_std_path(), ec);
+    if (ec) {
+      return Error::fmt("Failed to list directory '$': $", dir, ec.message());
+    }
+    for (const auto& p : entries) {
+      auto path = FilePath(p.path());
       auto filename = path.filename();
       auto rel_path = dir / filename;
       if (opts.exclude.contains(filename)) { continue; }
@@ -46,9 +52,6 @@ OrError<vector<FilePath>> list_regular_files_impl(
           output.push_back(path);
         }
       }
-    }
-    if (ec) {
-      return Error::fmt("Failed to list directory '$': $", dir, ec.message());
     }
   }
   return output;
@@ -151,7 +154,19 @@ OrError<Time> FileSystem::file_mtime(const FilePath& filename)
 
 bool FileSystem::exists(const FilePath& filename)
 {
-  return fs::exists(filename.to_std_path());
+  error_code ec;
+  std::ignore = fs::symlink_status(filename.to_std_path(), ec);
+  return !ec;
+}
+
+bool FileSystem::is_directory(const FilePath& filename)
+{
+  return fs::is_directory(filename.to_std_path());
+}
+
+bool FileSystem::is_regular_file(const FilePath& filename)
+{
+  return fs::is_regular_file(filename.to_std_path());
 }
 
 OrError<vector<FilePath>> FileSystem::list_regular_files(
@@ -165,17 +180,75 @@ OrError<DirectoryContent> FileSystem::list_dir(const FilePath& dir)
   error_code ec;
   DirectoryContent output;
   for (const auto& p : fs::directory_iterator(dir.to_std_path(), ec)) {
-    auto path = FilePath::of_std_path(p.path());
+    auto path = FilePath(p.path());
+    auto filename = path.filename();
     if (p.is_regular_file()) {
-      output.regular_files.push_back(path);
+      output.regular_files.push_back(filename);
     } else if (p.is_directory()) {
-      output.directories.push_back(path);
+      output.directories.push_back(filename);
     }
   }
   if (ec) {
     return Error::fmt("Failed to list directory '$': $", dir, ec.message());
   }
   return output;
+}
+
+OrError<FilePath> FileSystem::create_temp_dir(
+  const std::optional<FilePath>& prefix)
+{
+  std::string str;
+  if (prefix.has_value()) {
+    str = prefix->to_string();
+  } else {
+    str = "/tmp/bee-";
+  }
+  str += "XXXXXX";
+  if (mkdtemp(&str[0]) == nullptr) {
+    return EF("Failed to create temp dir: $", errno_msg());
+  }
+  return FilePath(str);
+}
+
+bee::OrError<FilePath> FileSystem::absolute(const FilePath& path)
+{
+  error_code ec;
+  auto out = fs::absolute(path.to_std_path(), ec);
+  if (ec) { return EF("Failed to determine absolute path: $", path); }
+  return FilePath(out);
+}
+
+bee::OrError<FilePath> FileSystem::canonical(const FilePath& path)
+{
+  error_code ec;
+  auto out = fs::canonical(path.to_std_path(), ec);
+  if (ec) { return EF("Failed to determine canonical path: $", path); }
+  return FilePath(out);
+}
+
+bee::OrError<> FileSystem::create_symlink(
+  const FilePath& path, const FilePath& target)
+{
+  error_code ec;
+  std::filesystem::create_symlink(path.to_std_path(), target.to_std_path(), ec);
+  if (ec) { return EF("Failed to create symlink: $", ec.message()); }
+  return bee::ok();
+}
+
+bee::OrError<FilePath> FileSystem::current_dir()
+{
+  error_code ec;
+  auto out = std::filesystem::current_path(ec);
+  if (ec) { return EF("Failed to get current path: $", ec.message()); }
+  return FilePath(out);
+}
+
+bee::OrError<> FileSystem::set_current_dir(const FilePath& dir)
+{
+  error_code ec;
+  std::filesystem::current_path(dir.to_std_path(), ec);
+  if (ec) { return EF("Failed to set current path: $", ec.message()); }
+  return bee::ok();
 }
 
 } // namespace bee

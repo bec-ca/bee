@@ -4,8 +4,9 @@
 #include <cstdint>
 #include <string>
 
-#include "error.hpp"
+#include "or_error.hpp"
 
+#include "bee/format_params.hpp"
 #include "bee/to_string_t.hpp"
 
 namespace bee {
@@ -18,6 +19,7 @@ struct Span {
   static Span of_seconds(double seconds);
   static Span of_minutes(double seconds);
   static Span of_hours(double seconds);
+  static Span of_days(double seconds);
 
   int64_t to_nanos() const;
   int64_t to_micros() const;
@@ -39,9 +41,13 @@ struct Span {
   bool operator>=(const Span& other) const;
 
   bool is_zero() const;
+  bool is_positive() const;
+  bool is_negative() const;
 
   Span operator-(const Span& other) const;
   Span operator+(const Span& other) const;
+
+  Span operator-() const;
 
   Span& operator+=(const Span& other);
   Span& operator-=(const Span& other);
@@ -54,7 +60,8 @@ struct Span {
 
   static Span zero();
 
-  std::string to_string(const FormatParams& p) const;
+  std::string to_string(const FormatParams& = {}) const;
+  static OrError<Span> of_string(const std::string& str);
 
   void sleep() const;
 

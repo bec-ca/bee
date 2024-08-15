@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 
+#include "date.hpp"
 #include "error.hpp"
 #include "span.hpp"
 
@@ -12,15 +13,10 @@ struct Time {
  public:
   static Time of_nanos_since_epoch(int64_t ts_nanos);
   static Time of_span_since_epoch(const Span& span);
+  static Time of_date(const Date& date);
   static Time epoch();
 
   Time();
-
-  Time(const Time&) = default;
-  Time(Time&&) = default;
-
-  Time& operator=(const Time&) = default;
-  Time& operator=(Time&&) = default;
 
   static Time min();
   static Time max();
@@ -47,10 +43,16 @@ struct Time {
 
   static Time zero();
 
+  static OrError<Time> of_string(const std::string& str);
   std::string to_string() const;
+  std::string to_string_filename() const;
 
  private:
   explicit Time(int64_t ts);
+
+  std::string _time_of_day() const;
+  std::string _date() const;
+
   int64_t _ts_nanos;
 };
 

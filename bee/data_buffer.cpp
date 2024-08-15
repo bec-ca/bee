@@ -3,23 +3,12 @@
 #include <cassert>
 #include <cstddef>
 
-#include "bee/util.hpp"
+#include "bytes.hpp"
+#include "util.hpp"
 
 using std::string;
-using std::vector;
 
 namespace bee {
-namespace {
-
-using Bytes = vector<std::byte>;
-
-Bytes to_bytes(const string& str)
-{
-  auto bytes = reinterpret_cast<const std::byte*>(str.data());
-  return Bytes(bytes, bytes + str.size());
-}
-
-} // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
 // DataBlock
@@ -31,6 +20,8 @@ DataBlock::DataBlock(const Bytes& data) : _data(data), _start(0) {}
 DataBlock::DataBlock(const std::byte* data, size_t size)
     : _data(data, data + size), _start(0)
 {}
+
+DataBlock::~DataBlock() noexcept {}
 
 const std::byte* DataBlock::data() const { return _data.data() + _start; }
 std::byte* DataBlock::data() { return _data.data() + _start; }
@@ -60,12 +51,9 @@ std::byte DataBlock::read_byte()
 //
 
 DataBuffer::DataBuffer() {}
-DataBuffer::DataBuffer(const string& data)
-{
-  _blocks.emplace_back(to_bytes(data));
-}
+DataBuffer::DataBuffer(const string& data) { write(data); }
 
-DataBuffer::~DataBuffer() {}
+DataBuffer::~DataBuffer() noexcept {}
 
 bool DataBuffer::empty() const
 {
@@ -84,7 +72,7 @@ size_t DataBuffer::size() const
 
 void DataBuffer::write(const string& data)
 {
-  _blocks.push_back(DataBlock(to_bytes(data)));
+  _blocks.emplace_back(Bytes(data));
 }
 
 void DataBuffer::write(DataBuffer&& other)
@@ -99,13 +87,11 @@ void DataBuffer::write(DataBuffer&& other)
 
 void DataBuffer::write(const std::byte* data, size_t size)
 {
-  _blocks.push_back(DataBlock(data, size));
+  _blocks.emplace_back(data, size);
 }
 
-void DataBuffer::write(std::vector<std::byte>&& data)
-{
-  _blocks.push_back(DataBlock(std::move(data)));
-}
+void DataBuffer::write(Bytes&& data) { _blocks.emplace_back(std::move(data)); }
+void DataBuffer::write(const Bytes& data) { _blocks.emplace_back(data); }
 
 void DataBuffer::prepend(DataBuffer&& other)
 {
@@ -123,7 +109,7 @@ string DataBuffer::to_string() const
 {
   string output;
   for (auto& block : _blocks) {
-    for (std::byte b : block) { output += std::to_integer<char>(b); }
+    for (std::byte b : block) { output += static_cast<char>(b); }
   }
   return output;
 }
@@ -135,8 +121,20 @@ string DataBuffer::read_string(size_t size)
     if (output.size() >= size) break;
     auto end = block.begin() + std::min(block.size(), size - output.size());
     for (auto it = block.begin(); it != end; it++) {
-      output += std::to_integer<char>(*it);
+      output += static_cast<char>(*it);
     }
+  }
+  consume(output.size());
+  return output;
+}
+
+Bytes DataBuffer::read_bytes(size_t size)
+{
+  Bytes output;
+  for (auto& block : _blocks) {
+    if (output.size() >= size) break;
+    auto end = block.begin() + std::min(block.size(), size - output.size());
+    output.insert(output.end(), block.begin(), end);
   }
   consume(output.size());
   return output;
@@ -149,7 +147,7 @@ std::optional<string> DataBuffer::read_line()
   auto read_until_eol = [&]() {
     for (auto& block : _blocks) {
       for (std::byte b : block) {
-        char c = std::to_integer<char>(b);
+        char c = static_cast<char>(b);
         if (c == '\n') {
           found_eol = true;
           return;

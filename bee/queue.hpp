@@ -11,8 +11,10 @@
 
 namespace bee {
 
-template <class T> struct Queue {
+template <std::move_constructible T> struct Queue {
  public:
+  using ptr = std::shared_ptr<Queue>;
+
   struct TimedOut {};
   struct QueueClosed {};
 
@@ -55,7 +57,14 @@ template <class T> struct Queue {
     std::optional<T> _value;
   };
 
+  static ptr create() { return std::make_shared<Queue>(); }
+
   Queue(std::optional<int> max_size = std::nullopt) : _max_size(max_size) {}
+  Queue(std::vector<T>&& initial, std::optional<int> max_size = std::nullopt)
+      : Queue(max_size)
+  {
+    for (auto&& el : initial) { _queue.emplace_back(std::move(el)); }
+  }
 
   Queue(const Queue& other) = delete;
   Queue(Queue&& other) = delete;
@@ -95,12 +104,17 @@ template <class T> struct Queue {
     return !_queue.empty();
   }
 
-  template <class U> bool push(U&& value)
+  bool push(T&& value) { return emplace(std::move(value)); }
+  bool push(const T& value) { return emplace(value); }
+
+  template <class... U>
+  bool emplace(U&&... args)
+    requires std::constructible_from<T, U...>
   {
     auto lk = lock();
     _wait_writable(lk);
     if (_closed) { return false; }
-    _queue.emplace_back(std::forward<U>(value));
+    _queue.emplace_back(std::forward<U>(args)...);
     _read_cv.notify_one();
     return true;
   }
@@ -131,14 +145,11 @@ template <class T> struct Queue {
 
   std::optional<T> _pop_no_lock()
   {
-    if (!_queue.empty()) {
-      auto ret = std::move(_queue.front());
-      _queue.pop_front();
-      _write_cv.notify_one();
-      return ret;
-    } else {
-      return std::nullopt;
-    }
+    if (_queue.empty()) { return std::nullopt; }
+    auto ret = std::move(_queue.front());
+    _queue.pop_front();
+    _write_cv.notify_one();
+    return ret;
   }
 
   bool _is_readable() const { return !_queue.empty() || _closed; }

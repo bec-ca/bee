@@ -5,36 +5,22 @@
 
 namespace bee {
 
-template <> struct to_string_t<int> {
-  static std::string convert(int value, const FormatParams& p);
-};
+#define DECLARE_CONVERTER(T)                                                   \
+  template <> struct to_string_t<T> {                                          \
+    static std::string convert(T value, const FormatParams& p);                \
+  };
 
-template <> struct to_string_t<unsigned> {
-  static std::string convert(unsigned value, const FormatParams& p);
-};
+DECLARE_CONVERTER(signed char);
+DECLARE_CONVERTER(unsigned char);
+DECLARE_CONVERTER(short);
+DECLARE_CONVERTER(unsigned short);
+DECLARE_CONVERTER(int);
+DECLARE_CONVERTER(unsigned);
+DECLARE_CONVERTER(long);
+DECLARE_CONVERTER(unsigned long);
+DECLARE_CONVERTER(long long);
+DECLARE_CONVERTER(unsigned long long);
 
-template <> struct to_string_t<short> {
-  static std::string convert(short value, const FormatParams& p);
-};
-
-template <> struct to_string_t<unsigned short> {
-  static std::string convert(unsigned short value, const FormatParams& p);
-};
-
-template <> struct to_string_t<long> {
-  static std::string convert(long value, const FormatParams& p);
-};
-
-template <> struct to_string_t<unsigned long> {
-  static std::string convert(unsigned long value, const FormatParams& p);
-};
-
-template <> struct to_string_t<long long> {
-  static std::string convert(long long value, const FormatParams& p);
-};
-
-template <> struct to_string_t<unsigned long long> {
-  static std::string convert(unsigned long long value, const FormatParams& p);
-};
+#undef DECLARE_CONVERTER
 
 } // namespace bee

@@ -256,7 +256,7 @@ std::string format_float(double number, const FormatParams& p)
       for (int i = 0; i < p.decimal_places; i++) { output.prepend('0'); }
       output.prepend('.');
     }
-    output.prepend('0');
+    add_digits(output, 0, 0, p.left_pad_zeroes, p.comma);
     if (p.sign) { output.prepend('+'); }
     return output.to_string();
   }
@@ -292,11 +292,11 @@ std::string format_float(double number, const FormatParams& p)
       add_digits(output, 0, p.decimal_places, 0, false);
       output.prepend('.');
     }
-    add_digits(output, num.mantissa(), num.exp(), 0, p.comma);
+    add_digits(output, num.mantissa(), num.exp(), p.left_pad_zeroes, p.comma);
   } else if (num.exp() < -18) {
     add_digits(output, num.mantissa(), 0, -num.exp(), false);
     output.prepend('.');
-    output.prepend('0');
+    add_digits(output, 0, 0, p.left_pad_zeroes, p.comma);
   } else {
     const uint64_t m = fast_int::pow10(-num.exp());
     auto d = num.mantissa() % m;
@@ -307,7 +307,7 @@ std::string format_float(double number, const FormatParams& p)
       -num.exp(),
       false);
     output.prepend('.');
-    add_digits(output, num.mantissa() / m, 0, 0, p.comma);
+    add_digits(output, num.mantissa() / m, 0, p.left_pad_zeroes, p.comma);
   }
 
   if (negative) {
@@ -320,6 +320,8 @@ std::string format_float(double number, const FormatParams& p)
 }
 
 } // namespace
+
+std::string float_to_string(double number) { return format_float(number, {}); }
 
 std::string to_string_t<float>::convert(float value, const FormatParams& p)
 {
