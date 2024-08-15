@@ -3,7 +3,7 @@
 export CXX=clang
 export PATH="$PWD/llvm/bin:$PATH"
 export LD_LIBRARY_PATH="$PWD/llvm/bin:$LD_LIBRARY_PATH"
-export CXXFLAGS="-I$PWD/llvm/include"
+export CXXFLAGS="-I$PWD/llvm/include -I$PWD/llvm/include/c++/v1"
 
 export MELLOW=build/mellow.bootstrap
 
