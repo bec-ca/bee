@@ -65,7 +65,7 @@ OrError<std::optional<string>> FileReader::read_line()
   string output;
   bool found_eol = false;
   while (_maybe_read_more()) {
-    char c = std::to_integer<char>(_buffer[_buffer_pos++]);
+    char c = static_cast<char>(_buffer[_buffer_pos++]);
     if (c == '\n') {
       found_eol = true;
       break;
