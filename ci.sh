@@ -1,6 +1,6 @@
 #!/bin/bash -eux
 
-ls llvm
+ls llvm/bin
 
 export PATH="$PWD/llvm/bin:$PATH"
 
