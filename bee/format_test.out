@@ -143,37 +143,37 @@ Test: raise_on_format_error
 =======
 fmt: '{'
 -------
-Error(Exn raised: bee/format_test.cpp:145:Format string ended unexpectedly:
+Error(Exn raised: ./bee/format_test.cpp:145:Format string ended unexpectedly:
 | fmt: '{'
 |        ^)
 =======
 fmt: '{6}'
 -------
-Error(Exn raised: bee/format_test.cpp:145:Unexpected character in format:
+Error(Exn raised: ./bee/format_test.cpp:145:Unexpected character in format:
 | fmt: '{6}'
 |        ^)
 =======
 fmt: 'other junk {} {c}'
 -------
-Error(Exn raised: bee/format_test.cpp:145:Unexpected character in format:
+Error(Exn raised: ./bee/format_test.cpp:145:Unexpected character in format:
 | fmt: 'other junk {} {c}'
 |                      ^)
 =======
 fmt: '{}'
 -------
-Error(Exn raised: bee/format_test.cpp:145:Extra formats in format string:
+Error(Exn raised: ./bee/format_test.cpp:145:Extra formats in format string:
 | fmt: '{}'
 |         ^)
 =======
 fmt: '$'
 -------
-Error(Exn raised: bee/format_test.cpp:145:Extra formats in format string:
+Error(Exn raised: ./bee/format_test.cpp:145:Extra formats in format string:
 | fmt: '$'
 |        ^)
 =======
 fmt: '$'
 -------
-Error(Exn raised: bee/format_test.cpp:145:Extra arguments in format:
+Error(Exn raised: ./bee/format_test.cpp:145:Extra arguments in format:
 | fmt: '$'
 |        ^)
 
