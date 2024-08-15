@@ -124,7 +124,7 @@ OrError<char> FileReader::read_char()
       return Error("Unexpected error");
     }
   }
-  return std::to_integer<char>(_buffer[_buffer_pos++]);
+  return static_cast<char>(_buffer[_buffer_pos++]);
 }
 
 FileReader::FileReader(FD::shared_ptr&& fd) : _fd(std::move(fd)) {}
