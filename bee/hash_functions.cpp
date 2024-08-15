@@ -4,6 +4,7 @@
 
 namespace bee {
 
+// TODO: Consilidate this with simple_checksum
 uint64_t HashFunctions::simple_string_hash(const std::string& str)
 {
   uint64_t output = 0;

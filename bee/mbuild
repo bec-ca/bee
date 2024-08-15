@@ -7,6 +7,11 @@ cpp_library:
     span
     time
 
+cpp_library:
+  name: array_view
+  headers: array_view.hpp
+  libs: error
+
 cpp_binary:
   name: benchmark
   libs: benchmark_main
@@ -15,7 +20,11 @@ cpp_library:
   name: benchmark_main
   sources: benchmark_main.cpp
   libs:
-    error
+    date
+    float_of_string
+    parse_string
+    print
+    string_util
     time
     to_string
 
@@ -25,11 +34,17 @@ cpp_library:
   headers: binary_format.hpp
   libs:
     data_buffer
-    error
+    or_error
 
 cpp_library:
   name: bus
   headers: bus.hpp
+
+cpp_library:
+  name: bytes
+  sources: bytes.cpp
+  headers: bytes.hpp
+  libs: to_string_t
 
 cpp_library:
   name: bytes_buffer
@@ -38,7 +53,6 @@ cpp_library:
 cpp_library:
   name: concepts
   headers: concepts.hpp
-  libs: unit
 
 cpp_library:
   name: copy
@@ -48,7 +62,9 @@ cpp_library:
   name: data_buffer
   sources: data_buffer.cpp
   headers: data_buffer.hpp
-  libs: util
+  libs:
+    bytes
+    util
 
 cpp_test:
   name: data_buffer_test
@@ -60,6 +76,28 @@ cpp_test:
   output: data_buffer_test.out
 
 cpp_library:
+  name: date
+  sources: date.cpp
+  headers: date.hpp
+  libs:
+    or_error
+    parse_string
+    string_util
+
+cpp_test:
+  name: date_test
+  sources: date_test.cpp
+  libs:
+    date
+    testing
+  output: date_test.out
+
+cpp_library:
+  name: errno_msg
+  sources: errno_msg.cpp
+  headers: errno_msg.hpp
+
+cpp_library:
   name: error
   sources: error.cpp
   headers: error.hpp
@@ -67,14 +105,12 @@ cpp_library:
     exn
     format
     location
-    unit
 
 cpp_test:
   name: error_test
   sources: error_test.cpp
   libs:
     error
-    format
     testing
   output: error_test.out
 
@@ -90,22 +126,39 @@ cpp_library:
   headers: fd.hpp
   libs:
     data_buffer
-    error
+    errno_msg
+    file_mode
     file_path
+    or_error
+    read_result
+    writer
+
+cpp_library:
+  name: file_mode
+  sources: file_mode.cpp
+  headers: file_mode.hpp
 
 cpp_library:
   name: file_path
   sources: file_path.cpp
   headers: file_path.hpp
 
+cpp_test:
+  name: file_path_test
+  sources: file_path_test.cpp
+  libs:
+    file_path
+    testing
+  output: file_path_test.out
+
 cpp_library:
   name: file_reader
   sources: file_reader.cpp
   headers: file_reader.hpp
   libs:
-    error
     fd
     file_path
+    or_error
     reader
 
 cpp_test:
@@ -118,14 +171,25 @@ cpp_test:
   output: file_reader_test.out
 
 cpp_library:
+  name: file_rw
+  sources: file_rw.cpp
+  headers: file_rw.hpp
+  libs:
+    fd
+    file_path
+    or_error
+    reader
+    writer
+
+cpp_library:
   name: file_writer
   sources: file_writer.cpp
   headers: file_writer.hpp
   libs:
     bytes_buffer
-    error
     fd
     file_path
+    or_error
     writer
 
 cpp_library:
@@ -133,11 +197,12 @@ cpp_library:
   sources: filesystem.cpp
   headers: filesystem.hpp
   libs:
-    error
+    errno_msg
     file_path
     file_reader
     file_writer
     format_filesystem
+    or_error
     time
     util
 
@@ -145,11 +210,10 @@ cpp_test:
   name: filesystem_test
   sources: filesystem_test.cpp
   libs:
-    error
     filesystem
     format
-    format_filesystem
     format_vector
+    scoped_tmp_dir
     sort
     string_util
     testing
@@ -158,6 +222,23 @@ cpp_test:
 cpp_library:
   name: fixed_rstring
   headers: fixed_rstring.hpp
+
+cpp_library:
+  name: float_of_string
+  sources: float_of_string.cpp
+  headers: float_of_string.hpp
+  libs:
+    int_of_string
+    or_error
+
+cpp_test:
+  name: float_of_string_test
+  sources: float_of_string_test.cpp
+  libs:
+    float_of_string
+    float_to_string
+    testing
+  output: float_of_string_test.out
 
 cpp_library:
   name: float_to_string
@@ -200,22 +281,23 @@ cpp_library:
     to_string_t
 
 cpp_library:
-  name: format_memory
-  headers: format_memory.hpp
-  libs:
-    format
-    to_string_t
-
-cpp_library:
   name: format_optional
   headers: format_optional.hpp
   libs:
-    format
+    format_params
+    to_string
     to_string_t
 
 cpp_library:
   name: format_params
   headers: format_params.hpp
+
+cpp_library:
+  name: format_ptr
+  headers: format_ptr.hpp
+  libs:
+    to_string
+    to_string_t
 
 cpp_library:
   name: format_set
@@ -228,8 +310,8 @@ cpp_test:
   name: format_test
   sources: format_test.cpp
   libs:
-    error
     format
+    or_error
     testing
   output: format_test.out
 
@@ -255,7 +337,37 @@ cpp_library:
 
 cpp_library:
   name: hex
+  sources: hex.cpp
   headers: hex.hpp
+  libs: fixed_rstring
+
+cpp_library:
+  name: hex_encoding
+  sources: hex_encoding.cpp
+  headers: hex_encoding.hpp
+  libs: or_error
+
+cpp_test:
+  name: hex_test
+  sources: hex_test.cpp
+  libs:
+    hex
+    testing
+  output: hex_test.out
+
+cpp_library:
+  name: int_of_string
+  sources: int_of_string.cpp
+  headers: int_of_string.hpp
+  libs: or_error
+
+cpp_test:
+  name: int_of_string_test
+  sources: int_of_string_test.cpp
+  libs:
+    int_of_string
+    testing
+  output: int_of_string_test.out
 
 cpp_library:
   name: int_to_string
@@ -264,19 +376,91 @@ cpp_library:
   libs:
     fixed_rstring
     format_params
+    hex
     to_string_t
 
 cpp_library:
   name: location
+  sources: location.cpp
   headers: location.hpp
+  libs: to_string
+
+cpp_library:
+  name: log_output
+  headers: log_output.hpp
+
+cpp_library:
+  name: mp
+  headers: mp.hpp
 
 cpp_library:
   name: nref
   headers: nref.hpp
 
 cpp_library:
+  name: on_destroy
+  headers: on_destroy.hpp
+
+cpp_library:
+  name: or_error
+  headers: or_error.hpp
+  libs:
+    exn
+    result
+
+cpp_test:
+  name: or_error_test
+  sources: or_error_test.cpp
+  libs:
+    or_error
+    testing
+  output: or_error_test.out
+
+cpp_library:
   name: os
   headers: os.hpp
+
+cpp_library:
+  name: parallel_map
+  headers: parallel_map.hpp
+  libs:
+    pop_queue
+    queue
+
+cpp_test:
+  name: parallel_map_test
+  sources: parallel_map_test.cpp
+  libs:
+    format
+    format_vector
+    parallel_map
+    sort
+    testing
+    util
+  output: parallel_map_test.out
+
+cpp_library:
+  name: parse_string
+  headers: parse_string.hpp
+  libs:
+    float_of_string
+    int_of_string
+
+cpp_library:
+  name: pop_queue
+  headers: pop_queue.hpp
+  libs: span
+
+cpp_library:
+  name: print
+  sources: print.cpp
+  headers: print.hpp
+  libs:
+    file_writer
+    format
+    location
+    log_output
+    to_string
 
 cpp_library:
   name: queue
@@ -284,10 +468,17 @@ cpp_library:
   libs: span
 
 cpp_library:
+  name: read_result
+  sources: read_result.cpp
+  headers: read_result.hpp
+
+cpp_library:
   name: reader
   sources: reader.cpp
   headers: reader.hpp
-  libs: error
+  libs:
+    bytes
+    or_error
 
 cpp_library:
   name: ref
@@ -295,30 +486,67 @@ cpp_library:
   libs: nref
 
 cpp_library:
+  name: result
+  headers: result.hpp
+  libs:
+    error
+    exn
+    format
+    format_params
+    to_string
+    unit
+
+cpp_test:
+  name: result_test
+  sources: result_test.cpp
+  libs:
+    result
+    testing
+  output: result_test.out
+
+cpp_library:
   name: sampler
   headers: sampler.hpp
+
+cpp_library:
+  name: scoped_tmp_dir
+  sources: scoped_tmp_dir.cpp
+  headers: scoped_tmp_dir.hpp
+  libs:
+    file_path
+    filesystem
+    or_error
 
 cpp_library:
   name: signal
   sources: signal.cpp
   headers: signal.hpp
   libs:
-    error
     fd
+    or_error
 
 cpp_library:
   name: simple_checksum
   sources: simple_checksum.cpp
   headers: simple_checksum.hpp
-  libs: hex
+  libs: print
 
 cpp_library:
   name: simple_timer
   sources: simple_timer.cpp
   headers: simple_timer.hpp
   libs:
+    print
     span
     time
+
+cpp_library:
+  name: socket
+  sources: socket.cpp
+  headers: socket.hpp
+  libs:
+    fd
+    or_error
 
 cpp_library:
   name: sort
@@ -329,8 +557,10 @@ cpp_library:
   sources: span.cpp
   headers: span.hpp
   libs:
-    error
     format
+    format_params
+    or_error
+    parse_string
     to_string_t
 
 cpp_test:
@@ -357,7 +587,7 @@ cpp_library:
   sources: string_util.cpp
   headers: string_util.hpp
   libs:
-    error
+    to_string
     util
 
 cpp_test:
@@ -365,6 +595,8 @@ cpp_test:
   sources: string_util_test.cpp
   libs:
     format
+    format_optional
+    format_vector
     string_util
     testing
   output: string_util_test.out
@@ -380,10 +612,12 @@ cpp_library:
   sources: sub_process.cpp
   headers: sub_process.hpp
   libs:
-    error
+    errno_msg
     fd
     file_path
     format
+    or_error
+    print
     string_util
     time
     util
@@ -401,16 +635,20 @@ cpp_library:
   sources: testing.cpp
   headers: testing.hpp
   libs:
-    error
+    file_writer
     format
+    print
 
 cpp_library:
   name: time
   sources: time.cpp
   headers: time.hpp
   libs:
+    date
     error
+    parse_string
     span
+    string_util
 
 cpp_library:
   name: time_block
@@ -418,6 +656,14 @@ cpp_library:
   libs:
     span
     time
+
+cpp_test:
+  name: time_test
+  sources: time_test.cpp
+  libs:
+    testing
+    time
+  output: time_test.out
 
 cpp_library:
   name: to_string
@@ -433,6 +679,8 @@ cpp_library:
   headers: to_string_builtin.hpp
   libs:
     float_to_string
+    format_params
+    hex
     int_to_string
     to_string_t
 
@@ -442,6 +690,14 @@ cpp_library:
   libs:
     concepts
     format_params
+
+cpp_test:
+  name: to_string_test
+  sources: to_string_test.cpp
+  libs:
+    testing
+    to_string
+  output: to_string_test.out
 
 cpp_library:
   name: type_name
@@ -455,13 +711,13 @@ cpp_library:
   name: util
   sources: util.cpp
   headers: util.hpp
-  libs: error
 
 cpp_test:
   name: util_test
   sources: util_test.cpp
   libs:
     format
+    format_vector
     string_util
     testing
     util
@@ -471,5 +727,7 @@ cpp_library:
   name: writer
   sources: writer.cpp
   headers: writer.hpp
-  libs: error
+  libs:
+    data_buffer
+    or_error
 

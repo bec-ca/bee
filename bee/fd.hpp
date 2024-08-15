@@ -1,49 +1,36 @@
 #pragma once
 
+#include <array>
 #include <memory>
 
 #include "data_buffer.hpp"
-#include "error.hpp"
+#include "file_mode.hpp"
 #include "file_path.hpp"
+#include "or_error.hpp"
+#include "read_result.hpp"
+#include "writer.hpp"
 
 namespace bee {
 
-struct ReadResult {
- public:
-  static ReadResult eof();
-
-  bool is_eof() const;
-
-  size_t bytes_read() const;
-
-  static ReadResult create(size_t bytes_read, bool eof_reached);
-
-  static ReadResult empty();
-
- private:
-  ReadResult(size_t bytes_read, bool state);
-
-  size_t _bytes_read;
-  bool _is_eof;
-};
-
-struct FD {
+struct FD final : public Writer {
   using shared_ptr = std::shared_ptr<FD>;
   using unique_ptr = std::unique_ptr<FD>;
 
   explicit FD(int fd);
-  ~FD();
+  virtual ~FD() noexcept;
 
   FD(const FD& other) = delete;
-  FD(FD&&);
+  FD(FD&&) noexcept;
 
   FD& operator=(const FD& other) = delete;
   FD& operator=(FD&&) = delete;
 
   static OrError<FD> create_file(const FilePath& filename);
   static OrError<FD> open_file(const FilePath& filename);
+  static OrError<FD> open_file(
+    const FilePath& filename, const FileModeBitSet& mode);
 
-  bool close();
+  virtual bool close() override;
   bool is_closed();
 
   bool empty();
@@ -56,8 +43,8 @@ struct FD {
 
   OrError<size_t> send(const std::byte* data, size_t size);
 
-  OrError<size_t> write(const std::byte* data, size_t size);
-  OrError<size_t> write(const std::string& data);
+  virtual OrError<size_t> write_raw(
+    const std::byte* data, size_t size) override;
 
   OrError<ReadResult> read(std::byte* data, size_t size);
   OrError<ReadResult> recv(std::byte* data, size_t size);
@@ -73,8 +60,6 @@ struct FD {
 
   int int_fd() const;
 
-  bool is_eof() const;
-
   bool is_tty() const;
 
   static const shared_ptr& stdout_filedesc();
@@ -86,11 +71,13 @@ struct FD {
   bool is_write_blocked() const;
 
   OrError<> seek(size_t pos);
+  OrError<> trunc(size_t size);
   OrError<size_t> remaining_bytes();
+
+  OrError<bool> lock(bool shared = false, bool block = false);
 
  private:
   int _fd;
-  bool _eof;
   bool _write_blocked;
 };
 

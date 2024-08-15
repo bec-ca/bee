@@ -11,10 +11,10 @@ using std::nullopt;
 using std::string;
 
 Error::Error(const Error& error) = default;
-Error::Error(Error&& error) = default;
+Error::Error(Error&& error) noexcept = default;
 
 Error& Error::operator=(const Error& error) = default;
-Error& Error::operator=(Error&& error) = default;
+Error& Error::operator=(Error&& error) noexcept = default;
 
 Error::Error(const string& msg)
     : _messages({{.message = msg, .location = nullopt}})
@@ -29,11 +29,14 @@ Error::Error(string&& msg)
 {}
 
 Error::Error(const bee::Exn& exn)
-    : _messages({{.message = exn.what(), .location = exn.loc()}})
+    : _messages(
+        {{.message = string("Exn raised: ") + exn.what(),
+          .location = exn.loc()}})
 {}
 
 Error::Error(const std::exception& exn)
-    : _messages({{.message = exn.what(), .location = nullopt}})
+    : _messages(
+        {{.message = string("Exn raised: ") + exn.what(), .location = nullopt}})
 {}
 
 Error::Error(const Location& loc, const string& msg)
@@ -43,6 +46,8 @@ Error::Error(const Location& loc, const string& msg)
 Error::Error(const Location& loc, string&& msg)
     : _messages({{.message = std::move(msg), .location = loc}})
 {}
+
+Error::~Error() noexcept {}
 
 string Error::msg() const
 {
@@ -70,8 +75,6 @@ string Error::full_msg() const
   }
   return out;
 }
-
-void Error::print_error() const { PE(full_msg()); }
 
 const deque<ErrorMessage>& Error::messages() const { return _messages; }
 

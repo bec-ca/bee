@@ -5,13 +5,17 @@
 #include <string>
 #include <vector>
 
+#include "bytes.hpp"
+
 namespace bee {
 
 struct DataBlock {
  public:
-  explicit DataBlock(std::vector<std::byte>&& data);
-  explicit DataBlock(const std::vector<std::byte>& data);
+  explicit DataBlock(Bytes&& data);
+  explicit DataBlock(const Bytes& data);
   explicit DataBlock(const std::byte* data, size_t size);
+
+  ~DataBlock() noexcept;
 
   const std::byte* data() const;
   std::byte* data();
@@ -29,7 +33,7 @@ struct DataBlock {
   const std::byte* end() const;
 
  private:
-  std::vector<std::byte> _data;
+  Bytes _data;
   size_t _start;
 };
 
@@ -38,13 +42,17 @@ struct DataBuffer {
   DataBuffer();
   explicit DataBuffer(const std::string& data);
 
-  ~DataBuffer();
+  ~DataBuffer() noexcept;
 
   void write(const std::string& data);
+
   void write(DataBuffer&& data);
+
   void write(const char* data, size_t size);
   void write(const std::byte* data, size_t size);
-  void write(std::vector<std::byte>&& data);
+
+  void write(const Bytes& data);
+  void write(Bytes&& data);
 
   void prepend(DataBuffer&& data);
 
@@ -53,6 +61,7 @@ struct DataBuffer {
   std::string to_string() const;
 
   std::string read_string(size_t bytes);
+  Bytes read_bytes(size_t bytes);
 
   std::optional<std::string> read_line();
 

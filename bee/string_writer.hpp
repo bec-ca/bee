@@ -12,11 +12,13 @@ struct StringWriter final : public Writer {
 
   static ptr create();
 
-  virtual void close() override;
-
-  virtual OrError<> write(const std::string& data) override;
+  virtual bool close() override;
 
   std::string& content();
+
+ protected:
+  virtual OrError<size_t> write_raw(
+    const std::byte* data, size_t size) override;
 
  private:
   std::string _content;

@@ -13,12 +13,13 @@ struct StringReader final : public Reader {
 
   static ptr create(std::string&& content);
 
-  virtual void close() override;
-  virtual OrError<std::string> read_str(size_t size) override;
+  virtual bool close() override;
+  virtual OrError<size_t> read_raw(std::byte* buffer, size_t size) override;
   virtual OrError<size_t> remaining_bytes() override;
-  virtual bool is_eof() override;
 
  private:
+  size_t _remaining_bytes() const;
+
   const std::string _content;
   size_t _offset = 0;
 };

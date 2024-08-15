@@ -12,12 +12,10 @@ void log()
 TEST(run_proc)
 {
   log();
-  must_unit(SubProcess::run(
-    {.cmd = FilePath::of_string("/bin/echo"), .args = {"hello"}}));
+  must_unit(SubProcess::run({.cmd = FilePath("/bin/echo"), .args = {"hello"}}));
   log();
-  must_unit(SubProcess::run(
-    {.cmd = FilePath::of_string("pwd"),
-     .cwd = FilePath::of_string("/usr/bin")}));
+  must_unit(
+    SubProcess::run({.cmd = FilePath("pwd"), .cwd = FilePath("/usr/bin")}));
   log();
 }
 
@@ -28,9 +26,7 @@ TEST(spawn_proc_stdout_spec)
   must(
     proc,
     SubProcess::spawn(
-      {.cmd = FilePath::of_string("echo"),
-       .args = {"yo"},
-       .stdout_spec = output}));
+      {.cmd = FilePath("echo"), .args = {"yo"}, .stdout_spec = output}));
   log();
   char data[1024];
   must(ret, output->fd()->read(reinterpret_cast<std::byte*>(data), 100));
@@ -44,10 +40,7 @@ TEST(spawn_proc_stdin_spec)
 {
   log();
   auto input = SubProcess::Pipe::create();
-  must(
-    proc,
-    SubProcess::spawn(
-      {.cmd = FilePath::of_string("cat"), .stdin_spec = input}));
+  must(proc, SubProcess::spawn({.cmd = FilePath("cat"), .stdin_spec = input}));
   log();
   std::string msg = "secret code 123\n";
   must(bytes, input->fd()->write(msg));
@@ -61,15 +54,11 @@ TEST(spawn_wait_any)
 {
   log();
 
-  must(
-    proc1,
-    SubProcess::spawn({.cmd = FilePath::of_string("sleep"), .args = {"0.2"}}));
+  must(proc1, SubProcess::spawn({.cmd = FilePath("sleep"), .args = {"0.2"}}));
 
   log();
 
-  must(
-    proc2,
-    SubProcess::spawn({.cmd = FilePath::of_string("sleep"), .args = {"0.4"}}));
+  must(proc2, SubProcess::spawn({.cmd = FilePath("sleep"), .args = {"0.4"}}));
 
   log();
 
@@ -89,9 +78,7 @@ TEST(output_to_string)
 {
   auto output = SubProcess::OutputToString::create();
   must_unit(SubProcess::run(
-    {.cmd = FilePath::of_string("echo"),
-     .args = {"yo"},
-     .stdout_spec = output}));
+    {.cmd = FilePath("echo"), .args = {"yo"}, .stdout_spec = output}));
   P("output: '$'", output->get_output());
 }
 

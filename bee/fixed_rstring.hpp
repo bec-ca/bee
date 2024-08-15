@@ -20,6 +20,9 @@ template <size_t S> struct fixed_rstring {
     _head -= 3;
   }
 
+  inline size_t size() const { return S - _head; }
+  inline ssize_t ssize() const { return size(); }
+
  private:
   char _data[S];
   size_t _head = S;

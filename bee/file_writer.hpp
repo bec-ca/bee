@@ -5,9 +5,9 @@
 #include <string>
 
 #include "bytes_buffer.hpp"
-#include "error.hpp"
 #include "fd.hpp"
 #include "file_path.hpp"
+#include "or_error.hpp"
 #include "writer.hpp"
 
 namespace bee {
@@ -16,37 +16,49 @@ struct FileWriter final : public Writer {
  public:
   using ptr = std::unique_ptr<FileWriter>;
 
-  static OrError<ptr> create(const FilePath& filename);
+  FileWriter(FD&& fd, bool buffered);
+  FileWriter(const FD::shared_ptr& fd, bool buffered);
 
   FileWriter(const FileWriter&) = delete;
   FileWriter(FileWriter&& other) = delete;
   FileWriter& operator=(const FileWriter&) = delete;
   FileWriter& operator=(FileWriter&&) = delete;
 
-  virtual ~FileWriter();
+  virtual ~FileWriter() noexcept;
 
-  virtual OrError<> write(const std::string& data) override;
-  OrError<> write(const std::byte* data, size_t size);
-  OrError<> write(const std::vector<std::byte>& data);
-  OrError<> write(const DataBuffer& data);
+  static OrError<ptr> create(const FilePath& filename);
+
   // TODO: write function that takes DataBuffer&& and avoid copying to the
   // internal buffer
 
-  virtual void close() override;
+  virtual bool close() override;
 
-  static OrError<> save_file(
+  static OrError<> write_file(
     const FilePath& filename, const std::string& content);
-  static OrError<> save_file(
+  static OrError<> write_file(
     const FilePath& filename, const std::vector<std::byte>& content);
 
   OrError<> flush();
 
- private:
-  FileWriter(FD&& fd);
+  bool is_tty() const;
 
-  FD _fd;
+  static FileWriter& stdout();
+  static FileWriter& stderr();
+
+  void set_buffered(bool buffered);
+
+ protected:
+  virtual OrError<size_t> write_raw(
+    const std::byte* data, size_t size) override;
+
+ private:
+  FD::shared_ptr _fd;
 
   BytesBuffer _buffer;
+
+  const bool _is_tty;
+
+  bool _buffered = true;
 };
 
 } // namespace bee

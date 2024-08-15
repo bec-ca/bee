@@ -1,0 +1,38 @@
+================================================================================
+Test: relative_to
+foo bar -> ../foo
+foo foo -> .
+foo foo/bar -> ..
+foo/bar foo -> bar
+
+================================================================================
+Test: stem
+'' -> ''
+'foo' -> 'foo'
+'foo.txt' -> 'foo'
+'dir/foo.txt' -> 'foo'
+'/root/dir/foo.txt' -> 'foo'
+
+================================================================================
+Test: parent
+--------
+/foo/bar/a/b/c
+path:/foo/bar/a/b empty:false
+path:/foo/bar/a empty:false
+path:/foo/bar empty:false
+path:/foo empty:false
+path:/ empty:false
+--------
+foo/bar/a/b/c
+path:foo/bar/a/b empty:false
+path:foo/bar/a empty:false
+path:foo/bar empty:false
+path:foo empty:false
+path: empty:true
+
+================================================================================
+Test: empty
+'/foo' -> false
+'/' -> false
+'' -> true
+

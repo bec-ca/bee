@@ -4,6 +4,9 @@ Test: split
 str:'foo bar yo' sep:' '
 num_parts:3 parts:['foo','bar','yo']
 ------------------------
+str:'foo bar yo ' sep:' '
+num_parts:4 parts:['foo','bar','yo','']
+------------------------
 str:'foobaryo' sep:' '
 num_parts:1 parts:['foobaryo']
 ------------------------
@@ -18,6 +21,9 @@ num_parts:2 parts:['foo','bar foobar']
 ------------------------
 str:'usr/bin/path/there' sep:'/'
 num_parts:4 parts:['usr','bin','path','there']
+------------------------
+str:'/usr/bin/path/there/' sep:'/'
+num_parts:6 parts:['','usr','bin','path','there','']
 
 ================================================================================
 Test: split_space
@@ -65,4 +71,43 @@ num_parts:3 parts:['foo','bar','yo baz taz']
 ------------------------
 'foo bar yo baz taz'
 num_parts:4 parts:['foo','bar','yo','baz taz']
+
+================================================================================
+Test: find_and_replace
+find_and_replace("foo.bar.baz", ".", "/") -> 'foo/bar/baz'
+find_and_replace(".foo..bar...baz....", "..", "/") -> '.foo/bar/.baz//'
+
+================================================================================
+Test: trim_spaces
+trim_spaces(" foo ") -> 'foo'
+trim_spaces("   foo   ") -> 'foo'
+trim_spaces(" \t  foo \n  ") -> 'foo'
+
+================================================================================
+Test: split_lines
+split_lines("foo") -> 'foo'
+split_lines("foo\n") -> 'foo'
+split_lines("foo\nbar") -> 'foo bar'
+split_lines("foo\nbar\n") -> 'foo bar'
+
+================================================================================
+Test: lower_upper
+to_upper("foo") -> 'FOO'
+to_upper("Foo") -> 'FOO'
+to_upper("FOO") -> 'FOO'
+to_lower("foo") -> 'foo'
+to_lower("Foo") -> 'foo'
+to_lower("FOO") -> 'foo'
+
+================================================================================
+Test: remove_suffix
+remove_suffix("foo", "bar") -> '<nullopt>'
+remove_suffix("foobar", "bar") -> 'foo'
+remove_suffix("foobar", "foo") -> '<nullopt>'
+
+================================================================================
+Test: remove_prefix
+remove_prefix("foo", "bar") -> '<nullopt>'
+remove_prefix("foobar", "bar") -> '<nullopt>'
+remove_prefix("foobar", "foo") -> 'bar'
 

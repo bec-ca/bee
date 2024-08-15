@@ -11,21 +11,19 @@ namespace bee {
 
 struct Exn : public std::exception {
  public:
-  template <std::convertible_to<std::string> T>
-  Exn(T&& what) : _what(std::forward<T>(what))
-  {}
-
-  template <std::convertible_to<std::string> T>
-  Exn(const Location& loc, T&& what) : _loc(loc), _what(std::forward<T>(what))
-  {}
+  Exn(const std::string_view& what);
+  Exn(const Location& loc, const std::string_view& what);
 
   Exn(const Exn& other) noexcept;
+  Exn(Exn&& other) noexcept;
 
-  virtual ~Exn();
+  virtual ~Exn() noexcept;
 
   virtual const char* what() const noexcept override;
 
   const std::optional<Location>& loc() const noexcept;
+
+  const std::string& to_string() const;
 
  private:
   std::optional<Location> _loc;

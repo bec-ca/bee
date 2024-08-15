@@ -1,36 +1,49 @@
+#include "bee/string_util.hpp"
+
 #include <cassert>
 #include <cstdint>
 #include <optional>
 
-#include "error.hpp"
 #include "util.hpp"
 
-using std::string;
-using std::vector;
-
 namespace bee {
+namespace {
 
-vector<string> split(const string& str, const string& sep)
+std::vector<std::string> split_impl(
+  const std::string_view& str,
+  const std::string_view& sep,
+  bool include_trailing_empty)
 {
   assert(!sep.empty());
-  vector<string> output;
+  std::vector<std::string> output;
   size_t pos = 0;
   while (1) {
     size_t next_pos = str.find(sep, pos);
-    if (next_pos == string::npos) {
-      output.push_back(str.substr(pos));
+    if (next_pos == std::string::npos) {
+      if (pos != str.size() || include_trailing_empty) {
+        output.push_back(std::string(str.substr(pos)));
+      }
       break;
     }
-    output.push_back(str.substr(pos, next_pos - pos));
+    output.push_back(std::string(str.substr(pos, next_pos - pos)));
     pos = next_pos + sep.size();
   }
   return output;
 }
 
-vector<string> split_space(const string& str, const int max_parts)
+} // namespace
+
+std::vector<std::string> split(
+  const std::string_view& str, const std::string_view& sep)
 {
-  vector<string> output;
-  string partial;
+  return split_impl(str, sep, true);
+}
+
+std::vector<std::string> split_space(
+  const std::string_view& str, const int max_parts)
+{
+  std::vector<std::string> output;
+  std::string partial;
 
   auto flush = [&]() {
     if (!partial.empty()) {
@@ -53,64 +66,89 @@ vector<string> split_space(const string& str, const int max_parts)
   return output;
 }
 
-string right_pad_string(string str, size_t length)
+std::vector<std::string> split_lines(const std::string_view& str)
+{
+  return split_impl(str, "\n", false);
+}
+
+std::string right_pad_string(std::string str, size_t length)
 {
   while (str.size() < length) { str += ' '; }
   return str;
 }
 
-bool ends_with(string const& value, string const& ending)
+std::optional<std::string> remove_prefix(
+  const std::string_view& str, const std::string_view& prefix)
 {
-  if (ending.size() > value.size()) return false;
-  return equal(ending.rbegin(), ending.rend(), value.rbegin());
+  if (!str.starts_with(prefix)) { return std::nullopt; }
+  return std::string(str.substr(prefix.size()));
 }
 
-string to_hex(const string& str)
+std::optional<std::string> remove_suffix(
+  const std::string_view& str, const std::string_view& suffix)
 {
-  auto hex_digit = [](int value) {
-    if (value < 10) return value + '0';
-    return value - 10 + 'a';
-  };
-  string out;
-  for (uint8_t c : str) {
-    string k(2, ' ');
-    k[0] = hex_digit(c / 0x10);
-    k[1] = hex_digit(c % 0x10);
-    out += k;
-  }
-  return out;
+  if (!str.ends_with(suffix)) { return std::nullopt; }
+  return std::string(str.substr(0, str.size() - suffix.size()));
 }
 
-OrError<string> of_hex(const string& str)
+std::string find_and_replace(
+  const std::string_view& str,
+  const std::string_view& needle,
+  const std::string_view& rep)
 {
-  if (str.size() % 2 != 0) {
-    return Error("Hex string must have even number of characters");
-  }
+  std::string output;
+  size_t pos = 0;
 
-  auto of_hex_digit = [](char d) -> std::optional<uint8_t> {
-    if (d >= '0' && d <= '9') return d - '0';
-    if (d >= 'a' && d <= 'f') return d - 'a' + 10;
-    if (d >= 'A' && d <= 'F') return d - 'A' + 10;
-    return std::nullopt;
-  };
-
-  string out;
-  for (size_t i = 0; i < str.size(); i += 2) {
-    auto d1 = of_hex_digit(str[i]);
-    auto d2 = of_hex_digit(str[i + 1]);
-    if (!d1.has_value() || !d2.has_value()) {
-      return Error("Not a valid hex string");
+  while (1) {
+    auto idx = std::min(str.size(), str.find(needle, pos));
+    while (pos < idx) {
+      output += str[pos];
+      pos++;
     }
-    uint8_t v = *d1 * 16 + *d2;
-    out.push_back(v);
+    if (pos == str.size()) { break; }
+    output += rep;
+    pos += needle.size();
   }
+
+  return output;
+}
+
+std::string trim_spaces(const std::string_view& str)
+{
+  size_t begin;
+  for (begin = 0; begin < str.size(); begin++) {
+    if (!isspace(str[begin])) { break; }
+  }
+
+  size_t end;
+  for (end = str.size(); end > 0; end--) {
+    if (!isspace(str[end - 1])) { break; }
+  }
+
+  return std::string(str.substr(begin, end - begin));
+}
+
+bool contains_string(
+  const std::string_view& str, const std::string_view& needle)
+{
+  return str.find(needle) != std::string::npos;
+}
+
+template <class F> std::string map_string(const std::string_view& str, F&& f)
+{
+  std::string out;
+  for (const char c : str) { out.push_back(f(c)); }
   return out;
 }
 
-std::string remove_prefix(const std::string& str, const std::string& prefix)
+std::string to_lower(const std::string_view& str)
 {
-  if (!str.starts_with(prefix)) { return str; }
-  return str.substr(prefix.size());
+  return map_string(str, tolower);
+}
+
+std::string to_upper(const std::string_view& str)
+{
+  return map_string(str, toupper);
 }
 
 } // namespace bee

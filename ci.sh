@@ -1,6 +1,9 @@
 #!/bin/bash -eu
 
-export CLANG_FORMAT=clang-format-16
+if command -v clang-format-18; then
+  export CLANG_FORMAT=clang-format-18
+fi
+
 export MELLOW=build/mellow.bootstrap
 
 function build_bootstrap() {

@@ -4,11 +4,19 @@ foo bar
 
 ================================================================================
 Test: is_one_of
-(is_one_of_v<int, int>) -> true
-(is_one_of_v<float, int>) -> false
-(is_one_of_v<float, float>) -> true
-(is_one_of_v<int, string, float, int>) -> true
-(is_one_of_v<int, string, float, char>) -> false
-(is_one_of_v<int, string, float, int*>) -> false
-(is_one_of_v<string&, int, string>) -> false
+(is_one_of<int, int>) -> 'true'
+(is_one_of<float, int>) -> 'false'
+(is_one_of<float, float>) -> 'true'
+(is_one_of<int, string, float, int>) -> 'true'
+(is_one_of<int, string, float, char>) -> 'false'
+(is_one_of<int, string, float, int*>) -> 'false'
+(is_one_of<string&, int, string>) -> 'false'
+
+================================================================================
+Test: concat_copy
+values:moved moved neither
+copy:copied copied copied
+moved:moved moved neither
+concated:copied copied copied
+concated_moved:moved moved moved
 

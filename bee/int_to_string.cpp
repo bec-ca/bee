@@ -4,8 +4,11 @@
 #include <array>
 #include <ranges>
 #include <string>
+#include <type_traits>
 
 #include "fixed_rstring.hpp"
+#include "format_params.hpp"
+#include "hex.hpp"
 #include "to_string_t.hpp"
 
 namespace bee {
@@ -33,7 +36,8 @@ template <class T>
 inline std::string format_int(T number_orig, const FormatParams& p)
 {
   bool negative = false;
-  std::make_unsigned_t<T> number;
+  using U = std::make_unsigned_t<T>;
+  U number;
   if (number_orig < 0) {
     negative = true;
     number = -number_orig;
@@ -43,7 +47,9 @@ inline std::string format_int(T number_orig, const FormatParams& p)
 
   fixed_rstring<32> out;
 
-  if (number == 0) {
+  if (p.hex) {
+    Hex::to_hex_rstring<U>(out, number);
+  } else if (number == 0) {
     out.prepend('0');
   } else {
     while (number >= table_size) {
@@ -58,6 +64,14 @@ inline std::string format_int(T number_orig, const FormatParams& p)
     }
   }
 
+  if (p.left_pad_zeroes > 0) {
+    while (out.ssize() < p.left_pad_zeroes) { out.prepend('0'); }
+  }
+
+  if (p.left_pad_spaces > 0) {
+    while (out.ssize() < p.left_pad_spaces) { out.prepend(' '); }
+  }
+
   if (negative) {
     out.prepend('-');
   } else if (p.sign) {
@@ -68,49 +82,21 @@ inline std::string format_int(T number_orig, const FormatParams& p)
 
 } // namespace
 
-std::string to_string_t<int>::convert(int number, const FormatParams& p)
-{
-  return format_int<int>(number, p);
-}
+#define IMPLEMENT_CONVERTER(T)                                                 \
+  std::string to_string_t<T>::convert(T number, const FormatParams& p)         \
+  {                                                                            \
+    return format_int<T>(number, p);                                           \
+  }
 
-std::string to_string_t<unsigned>::convert(
-  unsigned number, const FormatParams& p)
-{
-  return format_int<unsigned>(number, p);
-}
-
-std::string to_string_t<short>::convert(short number, const FormatParams& p)
-{
-  return format_int<short>(number, p);
-}
-
-std::string to_string_t<unsigned short>::convert(
-  unsigned short number, const FormatParams& p)
-{
-  return format_int<unsigned short>(number, p);
-}
-
-std::string to_string_t<long>::convert(long number, const FormatParams& p)
-{
-  return format_int<long>(number, p);
-}
-
-std::string to_string_t<unsigned long>::convert(
-  unsigned long number, const FormatParams& p)
-{
-  return format_int<unsigned long>(number, p);
-}
-
-std::string to_string_t<long long>::convert(
-  long long number, const FormatParams& p)
-{
-  return format_int<long long>(number, p);
-}
-
-std::string to_string_t<unsigned long long>::convert(
-  unsigned long long number, const FormatParams& p)
-{
-  return format_int<unsigned long long>(number, p);
-}
+IMPLEMENT_CONVERTER(signed char);
+IMPLEMENT_CONVERTER(unsigned char);
+IMPLEMENT_CONVERTER(short);
+IMPLEMENT_CONVERTER(unsigned short);
+IMPLEMENT_CONVERTER(int);
+IMPLEMENT_CONVERTER(unsigned);
+IMPLEMENT_CONVERTER(long);
+IMPLEMENT_CONVERTER(unsigned long);
+IMPLEMENT_CONVERTER(long long);
+IMPLEMENT_CONVERTER(unsigned long long);
 
 } // namespace bee

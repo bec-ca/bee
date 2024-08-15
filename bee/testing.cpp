@@ -1,7 +1,8 @@
 #include "testing.hpp"
 
-#include "error.hpp"
+#include "file_writer.hpp"
 #include "format.hpp"
+#include "print.hpp"
 
 using std::vector;
 
@@ -21,6 +22,7 @@ int add_to_tests(std::function<void()> f, const std::string& name)
 
 void run_tests()
 {
+  FileWriter::stdout().set_buffered(false);
   if (tests_singleton().empty()) {
     P("No tests found");
   } else {
@@ -28,11 +30,7 @@ void run_tests()
       P("=================================================================="
         "==============");
       P("Test: $", t.name);
-      auto err = try_with([&]() { t.t(); });
-      if (err.is_error()) {
-        P("Exception raised by test");
-        P(err.error().full_msg());
-      }
+      t.t();
       P("");
     }
   }

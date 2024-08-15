@@ -4,16 +4,38 @@ File: /file.txt
 
 ================================================================================
 Test: list_files
+----
 File: /dir1/sub1/file1.txt
 File: /dir1/sub2/file2.txt
 File: /dir2/file3.txt
 File: /file4.txt
+----
 File: ./dir1/sub1/file1.txt
 File: ./dir1/sub2/file2.txt
 File: ./dir2/file3.txt
 File: ./file4.txt
 
 ================================================================================
+Test: list_relative_path
+----
+Relative: true
+File: dir1/sub1/file1.txt
+File: dir1/sub2/file2.txt
+File: dir2/file3.txt
+File: file4.txt
+----
+Relative: false
+File: base/dir1/sub1/file1.txt
+File: base/dir1/sub2/file2.txt
+File: base/dir2/file3.txt
+File: base/file4.txt
+
+================================================================================
 Test: mtime
 true
+
+================================================================================
+Test: create_temp_dir
+true
+false
 

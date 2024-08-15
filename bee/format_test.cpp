@@ -1,7 +1,7 @@
 #include <limits>
 
-#include "error.hpp"
 #include "format.hpp"
+#include "or_error.hpp"
 #include "testing.hpp"
 
 namespace bee {
@@ -54,6 +54,8 @@ TEST(int_format)
   run_int_test(int16_t);
   run_int_test(int32_t);
   run_int_test(int64_t);
+
+  P(int32_t(1 << 31));
 }
 
 TEST(float_format_all_decimals)
@@ -136,6 +138,9 @@ TEST(float_format_sign)
 TEST(raise_on_format_error)
 {
   auto run_test = [](const char* fmt, const auto&... args) {
+    P("=======");
+    P("fmt: '$'", fmt);
+    P("-------");
     P(try_with([fmt, args...]() {
       P(fmt, args...);
       return unit;
@@ -143,6 +148,7 @@ TEST(raise_on_format_error)
   };
   run_test("{");
   run_test("{6}");
+  run_test("other junk {} {c}", 1, 2);
   run_test("{}");
   run_test("$");
   run_test("$", 1, 2);
@@ -233,6 +239,37 @@ TEST(float_exact_decimal_places_zero)
   PRINT_EXPR(t(7.553));
   PRINT_EXPR(t(0.0700000));
   PRINT_EXPR(t(0.00007));
+}
+
+TEST(int_space_padding)
+{
+  PRINT_EXPR(F("{ 5}", 5));
+  PRINT_EXPR(F("{ 5}", 52));
+  PRINT_EXPR(F("{ 5}", 1234));
+  PRINT_EXPR(F("{ 5}", 12345));
+  PRINT_EXPR(F("{ 5}", 123456));
+}
+
+TEST(int_zero_padding)
+{
+  PRINT_EXPR(F("{05}", 5));
+  PRINT_EXPR(F("{05}", 52));
+  PRINT_EXPR(F("{05}", 1234));
+  PRINT_EXPR(F("{05}", 12345));
+  PRINT_EXPR(F("{05}", 123456));
+}
+
+TEST(hex)
+{
+  PRINT_EXPR(F("{x}", 0));
+  PRINT_EXPR(F("{x}", 9));
+  PRINT_EXPR(F("{x}", 10));
+  PRINT_EXPR(F("{x}", 10000));
+  PRINT_EXPR(F("{x}", 0xffffffff));
+  PRINT_EXPR(F("{x}", 0xc00004));
+  PRINT_EXPR(F("{x}", 0xc0000004));
+
+  PRINT_EXPR(F("{08x}", 0xabcd));
 }
 
 } // namespace

@@ -1,11 +1,12 @@
 #include "fd.hpp"
 
-#include <cstring>
-#include <filesystem>
-
 #include <fcntl.h>
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#include "bee/errno_msg.hpp"
+#include "bee/read_result.hpp"
 
 using std::string;
 
@@ -14,20 +15,18 @@ namespace {
 
 #define bail_syscall(var, syscall, msg...)                                     \
   auto var = (syscall);                                                        \
-  if (var < 0) {                                                               \
-    auto err = Error::fmt("$", strerror(errno));                               \
+  if (var < 0) [[unlikely]] {                                                  \
+    auto err = Error::fmt("$ -> $", #syscall, errno_msg());                    \
     err.add_tag_with_location(HERE, maybe_format(msg));                        \
     return err;                                                                \
   }
 
 #define bail_syscall_unit(syscall, msg...)                                     \
-  if ((syscall) < 0) {                                                         \
-    auto err = Error::fmt("$", strerror(errno));                               \
+  if ((syscall) < 0) [[unlikely]] {                                            \
+    auto err = Error::fmt("$ -> $", #syscall, errno_msg());                    \
     err.add_tag_with_location(HERE, maybe_format(msg));                        \
     return err;                                                                \
   }
-
-char* errno_name() { return strerror(errno); }
 
 OrError<std::pair<int, int>> agnostic_pipe()
 {
@@ -42,42 +41,23 @@ OrError<std::pair<int, int>> agnostic_pipe()
   return std::make_pair(fds[0], fds[1]);
 }
 
+const bee::Error fd_closed_error("FD closed");
+
 } // namespace
-
-////////////////////////////////////////////////////////////////////////////////
-// ReadResult
-//
-
-ReadResult ReadResult::eof() { return ReadResult(0, true); }
-
-ReadResult::ReadResult(size_t bytes_read, bool is_eof)
-    : _bytes_read(bytes_read), _is_eof(is_eof)
-{}
-
-bool ReadResult::is_eof() const { return _is_eof; }
-
-ReadResult ReadResult::create(size_t bytes_read, bool eof_reached)
-{
-  return ReadResult(bytes_read, eof_reached);
-}
-
-size_t ReadResult::bytes_read() const { return _bytes_read; }
-
-ReadResult ReadResult::empty() { return ReadResult(0, false); }
 
 ////////////////////////////////////////////////////////////////////////////////
 // FD
 //
 
-FD::FD(int fd) : _fd(fd), _eof(false), _write_blocked(false) {}
+FD::FD(int fd) : _fd(fd), _write_blocked(false) {}
 
-FD::FD(FD&& other)
-    : _fd(other._fd), _eof(other._eof), _write_blocked(other._write_blocked)
+FD::FD(FD&& other) noexcept
+    : _fd(other._fd), _write_blocked(other._write_blocked)
 {
   other._fd = -1;
 }
 
-FD::~FD() { close(); }
+FD::~FD() noexcept { close(); }
 
 OrError<FD> FD::create_file(const FilePath& filename)
 {
@@ -99,9 +79,19 @@ OrError<FD> FD::open_file(const FilePath& filename)
   return FD(fd);
 }
 
+OrError<FD> FD::open_file(const FilePath& filename, const FileModeBitSet& mode)
+{
+  bail_syscall(
+    fd,
+    ::open(filename.data(), mode.to_system() | O_CLOEXEC, 0644),
+    "Failed to open file '$'",
+    filename);
+  return FD(fd);
+}
+
 bool FD::close()
 {
-  if (_fd == -1) { return false; }
+  if (is_closed()) { return false; }
   auto ret = ::close(_fd);
   _fd = -1;
   return ret == 0;
@@ -115,40 +105,40 @@ bool FD::is_closed()
 
 OrError<ReadResult> FD::read(std::byte* data, size_t size)
 {
+  if (is_closed()) [[unlikely]] { return fd_closed_error; }
   auto ret = ::read(_fd, data, size);
-  if (ret == -1) {
-    if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+  if (ret == -1) [[unlikely]] {
+    if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) [[likely]] {
       return ReadResult::empty();
+    } else {
+      return Error::fmt("Failed to read fd($): $", _fd, errno_msg());
     }
-    return Error::fmt("Failed to read fd($): $", _fd, errno_name());
-  }
-  if (ret == 0) {
-    _eof = true;
+  } else if (ret == 0) {
     return ReadResult::eof();
-  } else {
-    return ReadResult::create(ret, false);
   }
+  return ReadResult(ret);
 }
 
 OrError<ReadResult> FD::read(DataBuffer& buffer, size_t size)
 {
   std::byte bytes[1024];
   size_t bytes_read = 0;
-  bool reached_eof = false;
   while (bytes_read < size) {
     bail(ret, read(bytes, std::min(size - bytes_read, sizeof(bytes))));
     buffer.write(bytes, ret.bytes_read());
     bytes_read += ret.bytes_read();
     if (ret.is_eof()) {
-      reached_eof = true;
+      if (bytes_read == 0) { return ReadResult::eof(); }
       break;
     }
   }
-  return ReadResult::create(bytes_read, reached_eof);
+  return ReadResult(bytes_read);
 }
 
 OrError<ReadResult> FD::recv(std::byte* data, size_t size)
 {
+  // TODO: recv and read code should share more code
+  if (is_closed()) [[unlikely]] { return fd_closed_error; }
   auto ret = ::recv(_fd, data, size, 0);
   if (ret == -1) {
     if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
@@ -156,27 +146,28 @@ OrError<ReadResult> FD::recv(std::byte* data, size_t size)
     } else if (errno == ECONNRESET) {
       return ReadResult::eof();
     }
-    return Error::fmt("Failed to recv fd($): $", _fd, errno_name());
+    return Error::fmt("Failed to recv fd($): $", _fd, errno_msg());
+  } else if (ret == 0) {
+    return ReadResult::eof();
   }
-  return ReadResult::create(ret, ret == 0);
+  return ReadResult(ret);
 }
 
 OrError<ReadResult> FD::read_all_available(DataBuffer& output)
 {
   std::byte buffer[1024 * 2];
-  bool reached_eof = false;
   size_t bytes_read = 0;
-  while (!reached_eof) {
+  while (true) {
     bail(ret, read(buffer, sizeof(buffer)));
-
-    if (ret.is_eof()) { reached_eof = true; }
-
+    if (ret.is_eof()) {
+      if (bytes_read == 0) { return ReadResult::eof(); }
+      break;
+    }
     if (ret.bytes_read() == 0) { break; }
-
     bytes_read += ret.bytes_read();
     output.write(buffer, ret.bytes_read());
   }
-  return ReadResult::create(bytes_read, reached_eof);
+  return ReadResult(bytes_read);
 }
 
 OrError<ReadResult> FD::recv_all_available(DataBuffer& output)
@@ -186,19 +177,20 @@ OrError<ReadResult> FD::recv_all_available(DataBuffer& output)
   size_t bytes_read = 0;
   while (!reached_eof) {
     bail(ret, recv(buffer, sizeof(buffer)));
-
-    if (ret.is_eof()) { reached_eof = true; }
-
+    if (ret.is_eof()) {
+      if (bytes_read == 0) { return ReadResult::eof(); }
+      break;
+    }
     if (ret.bytes_read() == 0) { break; }
-
     bytes_read += ret.bytes_read();
     output.write(buffer, ret.bytes_read());
   }
-  return ReadResult::create(bytes_read, reached_eof);
+  return ReadResult(bytes_read);
 }
 
-OrError<size_t> FD::write(const std::byte* data, size_t size)
+OrError<size_t> FD::write_raw(const std::byte* data, size_t size)
 {
+  if (is_closed()) [[unlikely]] { return fd_closed_error; }
   _write_blocked = false;
   if (size == 0) { return 0; }
   auto ret = ::write(_fd, data, size);
@@ -207,26 +199,22 @@ OrError<size_t> FD::write(const std::byte* data, size_t size)
       _write_blocked = true;
       return 0;
     }
-    return Error::fmt("Failed to write file: $", errno_name());
+    return Error::fmt("Failed to write file: $", errno_msg());
   }
   return ret;
 }
 
-OrError<size_t> FD::write(const string& data)
-{
-  return write(reinterpret_cast<const std::byte*>(data.data()), data.size());
-}
-
 OrError<> FD::dup_onto(const FD& onto)
 {
-  if (_fd == -1) return ok();
+  if (_fd == -1) [[unlikely]]
+    return ok();
   bail_syscall(ret, dup2(_fd, onto._fd), "dup2 failed");
   return ok();
 }
 
 OrError<FD> FD::dup()
 {
-  if (_fd == -1) return Error("FD is not open");
+  if (_fd == -1) [[unlikely]] { return fd_closed_error; }
   bail_syscall(fd, ::dup(_fd), "dup failed");
   return FD(fd);
 }
@@ -243,12 +231,11 @@ std::unique_ptr<FD> FD::to_unique() &&
 
 OrError<> FD::flush()
 {
-  if (_fd != -1) {
-    int ret = ::fsync(_fd);
-    if (ret != 0) {
-      if (errno != EROFS && errno != EINVAL) {
-        return Error::fmt("fsync failed: $", errno_name());
-      }
+  if (_fd == -1) [[unlikely]] { return fd_closed_error; }
+  int ret = ::fsync(_fd);
+  if (ret != 0) {
+    if (errno != EROFS && errno != EINVAL) {
+      return Error::fmt("fsync failed: $", errno_msg());
     }
   }
   return ok();
@@ -274,8 +261,6 @@ const FD::shared_ptr& FD::stdin_filedesc()
   return fd;
 }
 
-bool FD::is_eof() const { return _eof; }
-
 bool FD::is_tty() const { return ::isatty(_fd) == 1; }
 
 OrError<> FD::set_blocking(bool blocking)
@@ -295,7 +280,7 @@ bool FD::is_write_blocked() const { return _write_blocked; }
 OrError<size_t> FD::send(const std::byte* data, size_t size)
 {
   _write_blocked = false;
-  if (size == 0) { return 0; }
+  if (size == 0) [[unlikely]] { return 0; }
   auto ret = ::send(_fd, data, size, 0);
 
   if (ret < 0) {
@@ -303,7 +288,7 @@ OrError<size_t> FD::send(const std::byte* data, size_t size)
       _write_blocked = true;
       return 0;
     } else {
-      shot("Failed to send data: $", errno_name());
+      shot("Failed to send data: $", errno_msg());
     }
   }
 
@@ -317,7 +302,7 @@ OrError<std::optional<FD>> FD::accept()
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
       return std::nullopt;
     } else {
-      shot("Failed to accept incoming connection: $", strerror(errno));
+      return EF("Failed to accept incoming connection: $", errno_msg());
     }
   }
   return FD(client_fd);
@@ -325,18 +310,37 @@ OrError<std::optional<FD>> FD::accept()
 
 OrError<> FD::seek(size_t pos)
 {
-  if (_fd == -1) { return Error("file closed"); }
+  if (_fd == -1) [[unlikely]] { return fd_closed_error; }
   bail_syscall_unit(lseek(_fd, pos, SEEK_SET));
+  return ok();
+}
+
+OrError<> FD::trunc(size_t size)
+{
+  if (_fd == -1) [[unlikely]] { return fd_closed_error; }
+  bail_syscall_unit(ftruncate(_fd, size));
   return ok();
 }
 
 OrError<size_t> FD::remaining_bytes()
 {
-  if (_fd == -1) { return Error("file closed"); }
+  if (_fd == -1) [[unlikely]] { return fd_closed_error; }
   bail_syscall(cur, lseek(_fd, 0, SEEK_CUR));
   bail_syscall(size, lseek(_fd, 0, SEEK_END));
   bail_syscall_unit(lseek(_fd, cur, SEEK_SET));
   return size - cur;
+}
+
+OrError<bool> FD::lock(bool shared, bool block)
+{
+  int ret = flock(_fd, (shared ? LOCK_SH : LOCK_EX) | (block ? 0 : LOCK_NB));
+  if (ret == 0) {
+    return true;
+  } else if (!block && (errno == EWOULDBLOCK || errno == EAGAIN)) {
+    return false;
+  } else {
+    return Error::fmt("$ ($)", errno_msg(), errno);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
