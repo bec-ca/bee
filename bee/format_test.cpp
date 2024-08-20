@@ -1,7 +1,8 @@
 #include <limits>
 
+#include "exn.hpp"
+#include "file_path.hpp"
 #include "format.hpp"
-#include "or_error.hpp"
 #include "testing.hpp"
 
 namespace bee {
@@ -135,17 +136,29 @@ TEST(float_format_sign)
   PRINT_EXPR(t(1000000));
 }
 
+template <class F> void print_exn(F&& fn)
+{
+  try {
+    fn();
+  } catch (const Exn& exn) {
+    P("{}:{}",
+      // Trim filename path to avoid test instability
+      FilePath(exn.loc()->filename).filename(),
+      exn.no_loc_what());
+  }
+}
+
 TEST(raise_on_format_error)
 {
   auto run_test = [](const char* fmt, const auto&... args) {
     P("=======");
     P("fmt: '$'", fmt);
     P("-------");
-    P(try_with([fmt, args...]() {
-      P(fmt, args...);
-      return unit;
-    }));
+    print_exn([fmt, args...]() { P(fmt, args...); });
   };
+  run_test("nothing");
+  run_test("{}", 1);
+  run_test("$", 1);
   run_test("{");
   run_test("{6}");
   run_test("other junk {} {c}", 1, 2);
