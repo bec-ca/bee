@@ -141,41 +141,53 @@ t(1000000) -> '+1,000,000'
 ================================================================================
 Test: raise_on_format_error
 =======
-fmt: '{'
+fmt: 'nothing'
 -------
-Error(Exn raised: ./bee/format_test.cpp:145:Format string ended unexpectedly:
-| fmt: '{'
-|        ^)
-=======
-fmt: '{6}'
--------
-Error(Exn raised: ./bee/format_test.cpp:145:Unexpected character in format:
-| fmt: '{6}'
-|        ^)
-=======
-fmt: 'other junk {} {c}'
--------
-Error(Exn raised: ./bee/format_test.cpp:145:Unexpected character in format:
-| fmt: 'other junk {} {c}'
-|                      ^)
+nothing
 =======
 fmt: '{}'
 -------
-Error(Exn raised: ./bee/format_test.cpp:145:Extra formats in format string:
+1
+=======
+fmt: '$'
+-------
+1
+=======
+fmt: '{'
+-------
+format_test.cpp:Format string ended unexpectedly:
+| fmt: '{'
+|        ^
+=======
+fmt: '{6}'
+-------
+format_test.cpp:Unexpected character in format:
+| fmt: '{6}'
+|        ^
+=======
+fmt: 'other junk {} {c}'
+-------
+format_test.cpp:Unexpected character in format:
+| fmt: 'other junk {} {c}'
+|                      ^
+=======
+fmt: '{}'
+-------
+format_test.cpp:Extra formats in format string:
 | fmt: '{}'
-|         ^)
+|         ^
 =======
 fmt: '$'
 -------
-Error(Exn raised: ./bee/format_test.cpp:145:Extra formats in format string:
+format_test.cpp:Extra formats in format string:
 | fmt: '$'
-|        ^)
+|        ^
 =======
 fmt: '$'
 -------
-Error(Exn raised: ./bee/format_test.cpp:145:Extra arguments in format:
+format_test.cpp:Extra arguments in format:
 | fmt: '$'
-|        ^)
+|        ^
 
 ================================================================================
 Test: float_exponential_notation

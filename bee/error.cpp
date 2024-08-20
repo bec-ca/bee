@@ -1,7 +1,5 @@
 #include "error.hpp"
 
-#include <stdexcept>
-
 #include "format.hpp"
 
 namespace bee {
