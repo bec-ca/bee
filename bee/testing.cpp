@@ -1,22 +1,19 @@
 #include "testing.hpp"
 
 #include "file_writer.hpp"
-#include "format.hpp"
 #include "print.hpp"
-
-using std::vector;
 
 namespace bee {
 
-vector<test_info>& tests_singleton()
+std::vector<test_info>& tests_singleton()
 {
-  static vector<test_info> tests;
+  static std::vector<test_info> tests;
   return tests;
 }
 
-int add_to_tests(std::function<void()> f, const std::string& name)
+int add_to_tests(void (*run)(), const char* name)
 {
-  tests_singleton().push_back({f, name});
+  tests_singleton().push_back({run, name});
   return 0;
 }
 
@@ -30,7 +27,7 @@ void run_tests()
       P("=================================================================="
         "==============");
       P("Test: $", t.name);
-      t.t();
+      t.run();
       P("");
     }
   }

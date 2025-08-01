@@ -1,0 +1,5 @@
+================================================================================
+Test: signal_name
+SignalCode::SigInt -> 'SigInt'
+SignalCode::SigTerm -> 'SigTerm'
+

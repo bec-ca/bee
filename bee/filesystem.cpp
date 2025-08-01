@@ -4,16 +4,11 @@
 #include <filesystem>
 #include <fstream>
 #include <queue>
-#include <ratio>
 
 #include <unistd.h>
 
 #include "errno_msg.hpp"
 #include "file_path.hpp"
-#include "file_reader.hpp"
-#include "file_writer.hpp"
-#include "format_filesystem.hpp"
-#include "util.hpp"
 
 using std::error_code;
 using std::istream;
@@ -148,8 +143,25 @@ OrError<Time> FileSystem::file_mtime(const FilePath& filename)
       "Failed to check file mtime '$': $", filename, ec.message());
   }
 
-  auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(mtime);
+  const auto duration =
+    std::chrono::duration_cast<std::chrono::nanoseconds>(mtime);
   return Time::of_span_since_epoch(Span::of_nanos(duration.count()));
+}
+
+OrError<> FileSystem::set_file_mtime(const FilePath& filename, const Time mtime)
+{
+  const auto mtime_sys = std::chrono::sys_time{
+    std::chrono::nanoseconds{mtime.to_nanos_since_epoch()}};
+  const auto mtime_file_clock = std::chrono::file_clock::from_sys(mtime_sys);
+
+  error_code ec;
+  fs::last_write_time(filename.to_std_path(), mtime_file_clock, ec);
+  if (ec) {
+    return Error::fmt(
+      "Failed to set file mtime '$': $", filename, ec.message());
+  }
+
+  return bee::ok();
 }
 
 bool FileSystem::exists(const FilePath& filename)
@@ -205,7 +217,8 @@ OrError<FilePath> FileSystem::create_temp_dir(
   }
   str += "XXXXXX";
   if (mkdtemp(&str[0]) == nullptr) {
-    return EF("Failed to create temp dir: $", errno_msg());
+    return EF(
+      "Failed to create temp dir with prefix '$': $", prefix, errno_msg());
   }
   return FilePath(str);
 }
@@ -214,7 +227,10 @@ bee::OrError<FilePath> FileSystem::absolute(const FilePath& path)
 {
   error_code ec;
   auto out = fs::absolute(path.to_std_path(), ec);
-  if (ec) { return EF("Failed to determine absolute path: $", path); }
+  if (ec) {
+    return EF(
+      "Failed to determine absolute path for '$': $", path, ec.message());
+  }
   return FilePath(out);
 }
 
@@ -222,7 +238,10 @@ bee::OrError<FilePath> FileSystem::canonical(const FilePath& path)
 {
   error_code ec;
   auto out = fs::canonical(path.to_std_path(), ec);
-  if (ec) { return EF("Failed to determine canonical path: $", path); }
+  if (ec) {
+    return EF(
+      "Failed to determine canonical path for '$': $", path, ec.message());
+  }
   return FilePath(out);
 }
 
@@ -231,7 +250,7 @@ bee::OrError<> FileSystem::create_symlink(
 {
   error_code ec;
   std::filesystem::create_symlink(path.to_std_path(), target.to_std_path(), ec);
-  if (ec) { return EF("Failed to create symlink: $", ec.message()); }
+  if (ec) { return EF("Failed to create symlink '$': $", path, ec.message()); }
   return bee::ok();
 }
 
@@ -247,7 +266,9 @@ bee::OrError<> FileSystem::set_current_dir(const FilePath& dir)
 {
   error_code ec;
   std::filesystem::current_path(dir.to_std_path(), ec);
-  if (ec) { return EF("Failed to set current path: $", ec.message()); }
+  if (ec) {
+    return EF("Failed to set current path to '$': $", dir, ec.message());
+  }
   return bee::ok();
 }
 

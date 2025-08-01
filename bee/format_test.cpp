@@ -14,7 +14,7 @@ template <class T> void run_one_test()
   P("max:{}", std::numeric_limits<T>::max());
   P("min:{,}", std::numeric_limits<T>::min());
   P("max:{,}", std::numeric_limits<T>::max());
-};
+}
 
 template <class T> void run_test_impl()
 {
@@ -22,7 +22,7 @@ template <class T> void run_test_impl()
   run_one_test<T>();
   P("\nUnsigned:");
   run_one_test<std::make_unsigned_t<T>>();
-};
+}
 
 TEST(basic)
 {
@@ -244,7 +244,7 @@ TEST(float_exact_decimal_places)
 
 TEST(float_exact_decimal_places_zero)
 {
-  auto t = [](auto v) { return F("{pf.0}", v); };
+  auto t = [](const auto v) { return F("{pf.0}", v); };
   PRINT_EXPR(t(7.0));
   PRINT_EXPR(t(700000.0));
   PRINT_EXPR(t(7.5));
@@ -283,6 +283,18 @@ TEST(hex)
   PRINT_EXPR(F("{x}", 0xc0000004));
 
   PRINT_EXPR(F("{08x}", 0xabcd));
+}
+
+TEST(bug)
+{
+  PRINT_EXPR(F("{fp.2}", 41.05));
+  PRINT_EXPR(F("{fp.2}", 0.05));
+  PRINT_EXPR(F("{fp.2}", 0.5));
+  PRINT_EXPR(F("{fp.9}", 0.0005));
+  PRINT_EXPR(F("{f.2}", 41.05));
+  PRINT_EXPR(F("{f.2}", 0.05));
+  PRINT_EXPR(F("{f.2}", 0.5));
+  PRINT_EXPR(F("{f.9}", 0.0005));
 }
 
 } // namespace

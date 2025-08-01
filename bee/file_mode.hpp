@@ -1,7 +1,5 @@
 #pragma once
 
-#include <array>
-
 namespace bee {
 
 enum class FileMode {
@@ -19,18 +17,20 @@ struct FileModeBitSet {
     return FileModeBitSet(_value | other._value);
   }
 
-  constexpr FileModeBitSet(FileMode m) : _value(int(m)) {}
+  constexpr FileModeBitSet(const FileMode m) : _value(static_cast<int>(m)) {}
 
-  constexpr bool has(FileMode m) const { return (_value & int(m)) != 0; }
+  constexpr bool has(const FileMode m) const
+  {
+    return (_value & static_cast<int>(m)) != 0;
+  }
 
   int to_system() const;
 
  private:
-  constexpr FileModeBitSet(int v) : _value(v) {}
+  constexpr FileModeBitSet(const int v) : _value(v) {}
+  static int enum_to_system(FileMode v);
 
   int _value;
-
-  static int enum_to_system(FileMode v);
 };
 
 constexpr FileModeBitSet operator|(FileMode m1, FileMode m2)

@@ -1,9 +1,9 @@
 #!/bin/bash -eux
 
-export CXX=clang-18
+export CXX=clang-19
 
-if command -v clang-format-18 &> /dev/null; then
-  export CLANG_FORMAT=clang-format-18
+if command -v clang-format-19 &> /dev/null; then
+  export CLANG_FORMAT=clang-format-19
 fi
 
 export LDFLAGS="${LDFLAGS:-} -lstdc++ -lm"

@@ -5,7 +5,6 @@
 #include "format.hpp"
 #include "location.hpp"
 #include "log_output.hpp"
-#include "to_string.hpp"
 
 namespace bee {
 

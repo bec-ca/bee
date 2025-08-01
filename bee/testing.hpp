@@ -1,22 +1,17 @@
 #pragma once
 
-#include <functional>
-#include <string>
-#include <vector>
-
-#include "bee/format.hpp"
 #include "bee/print.hpp"
 
 namespace bee {
 
 struct test_info {
-  std::function<void()> t;
-  std::string name;
+  void (*run)();
+  const char* name;
 };
 
 void run_tests();
 
-int add_to_tests(std::function<void()> f, const std::string& name);
+int add_to_tests(void (*run)(), const char* name);
 
 #define TEST(name)                                                             \
   void test_##name();                                                          \

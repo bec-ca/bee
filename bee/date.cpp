@@ -56,7 +56,7 @@ constexpr int get_days_in_month(int month, int year)
 
 constexpr int get_days_in_year(int year)
 {
-  return (is_leap_year(year) ? days_in_leap_year : days_in_regular_year);
+  return is_leap_year(year) ? days_in_leap_year : days_in_regular_year;
 }
 
 constexpr int get_date_index_of_the_first_day_of_year(int year)

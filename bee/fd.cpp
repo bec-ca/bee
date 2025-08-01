@@ -5,8 +5,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "bee/errno_msg.hpp"
-#include "bee/read_result.hpp"
+#include "errno_msg.hpp"
+#include "read_result.hpp"
 
 using std::string;
 
@@ -43,21 +43,28 @@ OrError<std::pair<int, int>> agnostic_pipe()
 
 const bee::Error fd_closed_error("FD closed");
 
+constexpr int INVALID_FD = -1;
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
 // FD
 //
 
-FD::FD(int fd) : _fd(fd), _write_blocked(false) {}
+FD::FD(const int fd, const bool owns)
+    : _fd(fd), _write_blocked(false), _owns(owns)
+{}
 
 FD::FD(FD&& other) noexcept
-    : _fd(other._fd), _write_blocked(other._write_blocked)
+    : _fd(other._fd), _write_blocked(other._write_blocked), _owns(other._owns)
 {
-  other._fd = -1;
+  other._fd = INVALID_FD;
 }
 
-FD::~FD() noexcept { close(); }
+FD::~FD() noexcept
+{
+  if (_owns) { close(); }
+}
 
 OrError<FD> FD::create_file(const FilePath& filename)
 {
@@ -79,7 +86,7 @@ OrError<FD> FD::open_file(const FilePath& filename)
   return FD(fd);
 }
 
-OrError<FD> FD::open_file(const FilePath& filename, const FileModeBitSet& mode)
+OrError<FD> FD::open_file(const FilePath& filename, const FileModeBitSet mode)
 {
   bail_syscall(
     fd,
@@ -92,16 +99,16 @@ OrError<FD> FD::open_file(const FilePath& filename, const FileModeBitSet& mode)
 bool FD::close()
 {
   if (is_closed()) { return false; }
-  auto ret = ::close(_fd);
-  _fd = -1;
+  if (!_owns) {
+    _fd = INVALID_FD;
+    return true;
+  }
+  const auto ret = ::close(_fd);
+  _fd = INVALID_FD;
   return ret == 0;
 }
 
-bool FD::is_closed()
-{
-  if (_fd == -1) { return true; }
-  return false;
-}
+bool FD::is_closed() { return _fd == INVALID_FD; }
 
 OrError<ReadResult> FD::read(std::byte* data, size_t size)
 {
@@ -206,7 +213,7 @@ OrError<size_t> FD::write_raw(const std::byte* data, size_t size)
 
 OrError<> FD::dup_onto(const FD& onto)
 {
-  if (_fd == -1) [[unlikely]]
+  if (is_closed()) [[unlikely]]
     return ok();
   bail_syscall(ret, dup2(_fd, onto._fd), "dup2 failed");
   return ok();
@@ -214,7 +221,7 @@ OrError<> FD::dup_onto(const FD& onto)
 
 OrError<FD> FD::dup()
 {
-  if (_fd == -1) [[unlikely]] { return fd_closed_error; }
+  if (is_closed()) [[unlikely]] { return fd_closed_error; }
   bail_syscall(fd, ::dup(_fd), "dup failed");
   return FD(fd);
 }
@@ -231,7 +238,7 @@ std::unique_ptr<FD> FD::to_unique() &&
 
 OrError<> FD::flush()
 {
-  if (_fd == -1) [[unlikely]] { return fd_closed_error; }
+  if (is_closed()) [[unlikely]] { return fd_closed_error; }
   int ret = ::fsync(_fd);
   if (ret != 0) {
     if (errno != EROFS && errno != EINVAL) {
@@ -245,19 +252,19 @@ int FD::int_fd() const { return _fd; }
 
 const FD::shared_ptr& FD::stdout_filedesc()
 {
-  static auto fd = FD(STDOUT_FILENO).to_shared();
+  static auto fd = FD(STDOUT_FILENO, false).to_shared();
   return fd;
 }
 
 const FD::shared_ptr& FD::stderr_filedesc()
 {
-  static auto fd = FD(STDERR_FILENO).to_shared();
+  static auto fd = FD(STDERR_FILENO, false).to_shared();
   return fd;
 }
 
 const FD::shared_ptr& FD::stdin_filedesc()
 {
-  static auto fd = FD(STDIN_FILENO).to_shared();
+  static auto fd = FD(STDIN_FILENO, false).to_shared();
   return fd;
 }
 
@@ -295,36 +302,23 @@ OrError<size_t> FD::send(const std::byte* data, size_t size)
   return ret;
 }
 
-OrError<std::optional<FD>> FD::accept()
-{
-  int client_fd = ::accept(_fd, nullptr, nullptr);
-  if (client_fd < 0) {
-    if (errno == EAGAIN || errno == EWOULDBLOCK) {
-      return std::nullopt;
-    } else {
-      return EF("Failed to accept incoming connection: $", errno_msg());
-    }
-  }
-  return FD(client_fd);
-}
-
 OrError<> FD::seek(size_t pos)
 {
-  if (_fd == -1) [[unlikely]] { return fd_closed_error; }
+  if (is_closed()) [[unlikely]] { return fd_closed_error; }
   bail_syscall_unit(lseek(_fd, pos, SEEK_SET));
   return ok();
 }
 
 OrError<> FD::trunc(size_t size)
 {
-  if (_fd == -1) [[unlikely]] { return fd_closed_error; }
+  if (is_closed()) [[unlikely]] { return fd_closed_error; }
   bail_syscall_unit(ftruncate(_fd, size));
   return ok();
 }
 
 OrError<size_t> FD::remaining_bytes()
 {
-  if (_fd == -1) [[unlikely]] { return fd_closed_error; }
+  if (is_closed()) [[unlikely]] { return fd_closed_error; }
   bail_syscall(cur, lseek(_fd, 0, SEEK_CUR));
   bail_syscall(size, lseek(_fd, 0, SEEK_END));
   bail_syscall_unit(lseek(_fd, cur, SEEK_SET));
@@ -333,7 +327,7 @@ OrError<size_t> FD::remaining_bytes()
 
 OrError<bool> FD::lock(bool shared, bool block)
 {
-  int ret = flock(_fd, (shared ? LOCK_SH : LOCK_EX) | (block ? 0 : LOCK_NB));
+  int ret = ::flock(_fd, (shared ? LOCK_SH : LOCK_EX) | (block ? 0 : LOCK_NB));
   if (ret == 0) {
     return true;
   } else if (!block && (errno == EWOULDBLOCK || errno == EAGAIN)) {

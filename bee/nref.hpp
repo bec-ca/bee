@@ -1,8 +1,11 @@
 #pragma once
 
 #include <cassert>
+#include <concepts>
 #include <memory>
-#include <optional>
+#include <string>
+
+#include "bee/to_string.hpp"
 
 namespace bee {
 
@@ -11,18 +14,36 @@ namespace bee {
 template <class T> struct nref {
  public:
   constexpr nref() : _value(nullptr) {}
-  constexpr nref(T& value) : _value(&value) {}
-  constexpr nref(T* value) : _value(value) {}
-  constexpr nref(const std::unique_ptr<T>& value) : _value(value.get()) {}
-  constexpr nref(const std::shared_ptr<T>& value) : _value(value.get()) {}
-
   constexpr nref(std::nullptr_t) : _value(nullptr) {}
 
+  template <class U>
+    requires std::convertible_to<U*, T*>
+  constexpr nref(U& value) : _value(&value)
+  {}
+
+  template <class U>
+    requires std::convertible_to<U*, T*>
+  constexpr nref(U* const value) : _value(value)
+  {}
+
+  template <class U>
+    requires std::convertible_to<U*, T*>
+  constexpr nref(const std::unique_ptr<U>& value) : _value(value.get())
+  {}
+
+  template <class U>
+    requires std::convertible_to<U*, T*>
+  constexpr nref(const std::shared_ptr<U>& value) : _value(value.get())
+  {}
+
   constexpr nref(const nref& other) = default;
+  constexpr nref(nref&& other) = default;
 
   constexpr nref& operator=(const nref& other) = default;
 
-  constexpr nref operator=(T& value)
+  template <class U>
+    requires std::convertible_to<U*, T*>
+  constexpr nref operator=(U& value)
   {
     _value = &value;
     return *this;
@@ -45,6 +66,15 @@ template <class T> struct nref {
   constexpr bool has_value() const { return _value != nullptr; }
 
   constexpr operator bool() const { return has_value(); }
+
+  std::string to_string() const
+  {
+    if (!has_value()) {
+      return "nullptr";
+    } else {
+      return bee::to_string(*_value);
+    }
+  }
 
  private:
   T* _value;

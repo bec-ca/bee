@@ -1,5 +1,3 @@
-#include "format.hpp"
-#include "format_vector.hpp"
 #include "string_util.hpp"
 #include "testing.hpp"
 #include "util.hpp"

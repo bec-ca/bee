@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 
 #include "bytes.hpp"
 #include "or_error.hpp"
@@ -18,6 +17,8 @@ struct Reader {
   virtual OrError<size_t> remaining_bytes() = 0;
 
   [[nodiscard]] OrError<std::string> read_str(size_t size);
+  [[nodiscard]] OrError<std::vector<std::byte>> read_bytes(size_t size);
+
   [[nodiscard]] OrError<size_t> read(std::byte* buffer, size_t size);
   [[nodiscard]] OrError<size_t> read(Bytes& buffer, size_t size);
 

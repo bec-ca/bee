@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "float_to_string.hpp"
-#include "int_to_string.hpp"
+#include "float_to_string.hpp" // IWYU pragma: export
+#include "int_to_string.hpp"   // IWYU pragma: export
 #include "to_string_t.hpp"
 
 #include "bee/format_params.hpp"

@@ -4,7 +4,6 @@
 
 #include "filesystem.hpp"
 #include "format.hpp"
-#include "format_vector.hpp"
 #include "scoped_tmp_dir.hpp"
 #include "sort.hpp"
 #include "string_util.hpp"

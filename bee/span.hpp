@@ -4,22 +4,29 @@
 #include <cstdint>
 #include <string>
 
+#include "format_params.hpp"
 #include "or_error.hpp"
-
-#include "bee/format_params.hpp"
-#include "bee/to_string_t.hpp"
 
 namespace bee {
 
 struct Span {
  public:
+  // TODO: these should take int64_t
   static Span of_nanos(int64_t nanos);
-  static Span of_micros(double micros);
-  static Span of_millis(double millis);
-  static Span of_seconds(double seconds);
-  static Span of_minutes(double seconds);
-  static Span of_hours(double seconds);
-  static Span of_days(double seconds);
+
+  static Span of_float_micros(double micros);
+  static Span of_float_millis(double millis);
+  static Span of_float_seconds(double seconds);
+  static Span of_float_minutes(double seconds);
+  static Span of_float_hours(double seconds);
+  static Span of_float_days(double seconds);
+
+  static Span of_int_micros(int64_t micros);
+  static Span of_int_millis(int64_t millis);
+  static Span of_int_seconds(int64_t seconds);
+  static Span of_int_minutes(int64_t seconds);
+  static Span of_int_hours(int64_t seconds);
+  static Span of_int_days(int64_t seconds);
 
   int64_t to_nanos() const;
   int64_t to_micros() const;
@@ -61,7 +68,7 @@ struct Span {
   static Span zero();
 
   std::string to_string(const FormatParams& = {}) const;
-  static OrError<Span> of_string(const std::string& str);
+  static OrError<Span> of_string(const std::string_view str);
 
   void sleep() const;
 

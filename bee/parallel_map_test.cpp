@@ -1,5 +1,4 @@
 #include "format.hpp"
-#include "format_vector.hpp"
 #include "parallel_map.hpp"
 #include "sort.hpp"
 #include "testing.hpp"

@@ -16,10 +16,9 @@
 
 #include "errno_msg.hpp"
 #include "fd.hpp"
-#include "format.hpp"
 #include "print.hpp"
+#include "signal.hpp"
 #include "string_util.hpp"
-#include "util.hpp"
 
 #ifndef __APPLE__
 #include <sys/prctl.h>
@@ -61,7 +60,7 @@ struct OutputToStringImpl : public SubProcess::OutputToString {
   {
     if (_thread.has_value()) {
       _thread->join();
-      _thread = std::nullopt;
+      _thread.reset();
     }
   }
 
@@ -335,11 +334,9 @@ bool SubProcess::Pid::operator<(const Pid& other) const
   return _pid < other._pid;
 }
 
-OrError<> SubProcess::Pid::kill()
+OrError<> SubProcess::Pid::signal(const SignalCode signal)
 {
-  if (::kill(_pid, SIGKILL) == 0) { return ok(); }
-
-  return Error::fmt("Failed to send sigkill to process: $", errno_msg());
+  return Signal::send(_pid, signal);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -374,7 +371,7 @@ OrError<SubProcess::ptr> SubProcess::spawn(
   int pid = fork();
   if (pid == 0) {
 #ifdef __APPLE__
-    // TODO: alternative required for apple
+    // I think macos basically does this by default
 #else
     int r = prctl(PR_SET_PDEATHSIG, SIGTERM);
     if (r == -1) {
@@ -454,7 +451,10 @@ OrError<> SubProcess::wait()
   return exit_status_to_or_error(status);
 }
 
-OrError<> SubProcess::kill() { return _pid.kill(); }
+OrError<> SubProcess::signal(const SignalCode signal)
+{
+  return _pid.signal(signal);
+}
 
 const SubProcess::Pid& SubProcess::pid() const { return _pid; }
 

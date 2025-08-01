@@ -76,4 +76,9 @@ template <class... Ts> std::string maybe_format(Ts&&... args)
 
 #define raise_error(msg...) throw bee::Exn(HERE, bee::maybe_format(msg))
 
+#define ASSERT(cond, msg...)                                                   \
+  if (!(cond)) [[unlikely]]                                                    \
+  throw bee::Exn(                                                              \
+    HERE, F("ASSERTION FAILED ($). $", #cond, bee::maybe_format(msg)))
+
 } // namespace bee
