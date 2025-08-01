@@ -1,6 +1,3 @@
-#include "format.hpp"
-#include "format_optional.hpp"
-#include "format_vector.hpp"
 #include "string_util.hpp"
 #include "testing.hpp"
 
@@ -74,10 +71,10 @@ TEST(split_space_max_parts)
   split_and_print("foo bar yo baz taz", 4);
 }
 
-TEST(find_and_replace)
+TEST(find_and_replace_all)
 {
-  PRINT_EXPR(find_and_replace("foo.bar.baz", ".", "/"));
-  PRINT_EXPR(find_and_replace(".foo..bar...baz....", "..", "/"));
+  PRINT_EXPR(find_and_replace_all("foo.bar.baz", ".", "/"));
+  PRINT_EXPR(find_and_replace_all(".foo..bar...baz....", "..", "/"));
 }
 
 TEST(trim_spaces)

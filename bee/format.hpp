@@ -2,24 +2,12 @@
 
 #include <cassert>
 #include <optional>
-#include <stdexcept>
 #include <string>
-#include <type_traits>
 
 #include "location.hpp"
-#include "to_string.hpp"
+#include "to_string.hpp" // IWYU pragma: export
 
 namespace bee {
-
-template <class T> std::string convert_container(const T& container)
-{
-  std::string output;
-  for (const auto& el : container) {
-    if (!output.empty()) { output += " "; }
-    output += to_string(el);
-  }
-  return output;
-}
 
 namespace format_details {
 

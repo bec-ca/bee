@@ -46,5 +46,18 @@ TEST(read_by_blocks)
   P(content.size());
 }
 
+TEST(read_str)
+{
+  string content = "aaaaaaacdbbbbb";
+  must_unit(FileWriter::write_file(tmp_filename, content));
+  must(file, FileReader::open(tmp_filename));
+  std::array<char, 8> first;
+  must_unit(file->read(reinterpret_cast<std::byte*>(&first), sizeof(first)));
+  P(std::string_view(first.begin(), first.end()));
+
+  must(second, file->read_str(6));
+  P(second);
+}
+
 } // namespace
 } // namespace bee

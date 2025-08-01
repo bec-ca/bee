@@ -73,9 +73,9 @@ num_parts:3 parts:['foo','bar','yo baz taz']
 num_parts:4 parts:['foo','bar','yo','baz taz']
 
 ================================================================================
-Test: find_and_replace
-find_and_replace("foo.bar.baz", ".", "/") -> 'foo/bar/baz'
-find_and_replace(".foo..bar...baz....", "..", "/") -> '.foo/bar/.baz//'
+Test: find_and_replace_all
+find_and_replace_all("foo.bar.baz", ".", "/") -> 'foo/bar/baz'
+find_and_replace_all(".foo..bar...baz....", "..", "/") -> '.foo/bar/.baz//'
 
 ================================================================================
 Test: trim_spaces

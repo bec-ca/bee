@@ -6,6 +6,9 @@ namespace bee {
 
 template <class T> struct ArrayView {
  public:
+  ArrayView(const ArrayView& other) = default;
+  ArrayView(ArrayView&& other) = default;
+
   constexpr ArrayView(T* const begin, T* const end) : _begin(begin), _end(end)
   {
     if (begin > end) {
@@ -14,6 +17,7 @@ template <class T> struct ArrayView {
   }
 
   template <class C>
+    requires(!std::is_same_v<std::decay_t<C>, ArrayView<T>>)
   constexpr ArrayView(C&& v) : _begin(v.data()), _end(v.data() + v.size())
   {}
 

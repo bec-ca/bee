@@ -7,7 +7,6 @@
 
 #include "fixed_rstring.hpp"
 #include "int_to_string.hpp"
-#include "to_string_t.hpp"
 
 namespace bee {
 namespace {
@@ -161,8 +160,8 @@ struct float10 {
     return add(*this, other);
   }
 
-  constexpr uint64_t mantissa() const { return _mantissa; };
-  constexpr int exp() const { return _exp; };
+  constexpr uint64_t mantissa() const { return _mantissa; }
+  constexpr int exp() const { return _exp; }
 
   constexpr void normalize()
   {
@@ -208,8 +207,8 @@ inline void add_digits(
   fixed_rstring<1024>& output,
   uint64_t number,
   int extra_trailing_zeroes,
-  int pad_left_zeros,
-  bool comma)
+  const int pad_left_zeros,
+  const bool comma)
 {
   int digits = 0;
   while (number > 0 || extra_trailing_zeroes > 0 || digits == 0 ||
@@ -299,13 +298,13 @@ std::string format_float(double number, const FormatParams& p)
     add_digits(output, 0, 0, p.left_pad_zeroes, p.comma);
   } else {
     const uint64_t m = fast_int::pow10(-num.exp());
-    auto d = num.mantissa() % m;
-    add_digits(
-      output,
-      d,
-      p.exact_decimal_places ? p.decimal_places - fast_int::count_digits(d) : 0,
-      -num.exp(),
-      false);
+    const uint64_t d = num.mantissa() % m;
+    if (p.exact_decimal_places) {
+      const int zeroes =
+        p.decimal_places - std::max(-num.exp(), fast_int::count_digits(d));
+      for (int i = 0; i < zeroes; i++) { output.prepend('0'); }
+    }
+    add_digits(output, d, 0, -num.exp(), false);
     output.prepend('.');
     add_digits(output, num.mantissa() / m, 0, p.left_pad_zeroes, p.comma);
   }

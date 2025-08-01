@@ -2,13 +2,9 @@
 
 #include <chrono>
 #include <limits>
-#include <stdexcept>
 #include <thread>
 
-#include "format.hpp"
-
 #include "bee/parse_string.hpp"
-#include "bee/to_string_t.hpp"
 
 namespace bee {
 namespace {
@@ -28,12 +24,47 @@ struct Constants {
 Span::Span(int64_t nanos) : _span_nanos(nanos) {}
 
 Span Span::of_nanos(int64_t nanos) { return Span(nanos * Constants::nano); }
-Span Span::of_micros(double micros) { return Span(micros * Constants::micro); }
-Span Span::of_millis(double millis) { return Span(millis * Constants::milli); }
-Span Span::of_seconds(double secs) { return Span(secs * Constants::second); }
-Span Span::of_minutes(double mins) { return Span(mins * Constants::minute); }
-Span Span::of_hours(double hours) { return Span(hours * Constants::hour); }
-Span Span::of_days(double days) { return Span(days * Constants::day); }
+
+Span Span::of_float_micros(double micros)
+{
+  return Span(micros * Constants::micro);
+}
+Span Span::of_float_millis(double millis)
+{
+  return Span(millis * Constants::milli);
+}
+Span Span::of_float_seconds(double secs)
+{
+  return Span(secs * Constants::second);
+}
+Span Span::of_float_minutes(double mins)
+{
+  return Span(mins * Constants::minute);
+}
+Span Span::of_float_hours(double hours)
+{
+  return Span(hours * Constants::hour);
+}
+Span Span::of_float_days(double days) { return Span(days * Constants::day); }
+
+Span Span::of_int_micros(int64_t micros)
+{
+  return Span(micros * Constants::micro);
+}
+Span Span::of_int_millis(int64_t millis)
+{
+  return Span(millis * Constants::milli);
+}
+Span Span::of_int_seconds(int64_t secs)
+{
+  return Span(secs * Constants::second);
+}
+Span Span::of_int_minutes(int64_t mins)
+{
+  return Span(mins * Constants::minute);
+}
+Span Span::of_int_hours(int64_t hours) { return Span(hours * Constants::hour); }
+Span Span::of_int_days(int64_t days) { return Span(days * Constants::day); }
 
 Span Span::zero() { return Span(0); }
 
@@ -167,7 +198,7 @@ const Error invalid_format_error("Invalid format");
 const Error invalid_suffix_error("Invalid suffix");
 const Error overflow_error("Overflow");
 
-OrError<Span> Span::of_string(const std::string& str)
+OrError<Span> Span::of_string(const std::string_view str)
 {
   int idx = 0;
   for (; idx < std::ssize(str); ++idx) {
@@ -183,18 +214,18 @@ OrError<Span> Span::of_string(const std::string& str)
   bail(value, bee::parse_string<double>(str.substr(0, idx)));
 
   auto suffix = str.substr(idx);
-  if (suffix == "s") {
-    return of_seconds(value);
-  } else if (suffix == "ms") {
-    return of_millis(value);
-  } else if (suffix == "us") {
-    return of_micros(value);
-  } else if (suffix == "ns") {
+  if (suffix == "ns") {
     return of_nanos(value);
+  } else if (suffix == "us") {
+    return of_float_micros(value);
+  } else if (suffix == "ms") {
+    return of_float_millis(value);
+  } else if (suffix == "s") {
+    return of_float_seconds(value);
   } else if (suffix == "min") {
-    return of_minutes(value);
+    return of_float_minutes(value);
   } else if (suffix == "h") {
-    return of_hours(value);
+    return of_float_hours(value);
   } else {
     return invalid_suffix_error;
   }

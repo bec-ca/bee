@@ -10,12 +10,11 @@
 
 namespace bee {
 
-struct FileReader final : public Reader {
+struct FileReader : public Reader {
  public:
   using ptr = std::unique_ptr<FileReader>;
 
-  FileReader(FD::shared_ptr&& fd);
-  FileReader(const FD::shared_ptr& fd);
+  FileReader();
 
   static OrError<ptr> open(const FilePath& filename);
 
@@ -28,52 +27,16 @@ struct FileReader final : public Reader {
   static OrError<std::vector<std::string>> read_file_lines(
     const FilePath& filename);
 
-  FileReader(const FileReader&) = delete;
-  FileReader(FileReader&& other) = delete;
-  FileReader& operator=(const FileReader&) = delete;
-  FileReader& operator=(FileReader&&) = delete;
+  static FileReader& stdin_reader();
 
   virtual ~FileReader() noexcept;
 
-  OrError<std::optional<std::string>> read_line();
-  OrError<std::vector<std::string>> read_all_lines();
+  virtual OrError<std::optional<std::string>> read_line() = 0;
+  virtual OrError<std::vector<std::string>> read_all_lines() = 0;
 
-  OrError<std::string> read_all();
-  OrError<std::vector<std::byte>> read_all_bytes();
-  OrError<char> read_char();
-
-  virtual OrError<size_t> remaining_bytes() override;
-
-  virtual bool close() override;
-
-  static FileReader& stdin_reader();
-
- protected:
-  [[nodiscard]] virtual OrError<size_t> read_raw(
-    std::byte* buffer, size_t size) override;
-
- private:
-  template <class T> OrError<T> _read_all_gen();
-
-  size_t _available_on_buffer() const;
-  bool _buffer_has_data() const;
-  size_t _read_into(std::byte* buffer, size_t size);
-  size_t _read_full(std::byte* buffer, size_t size);
-  size_t _read_from_buffer(std::byte* buffer, size_t size);
-  bool _maybe_read_more();
-
-  const std::byte* buffer_begin() const;
-  const std::byte* buffer_end() const;
-  void clear_buffer();
-
-  static constexpr size_t BufferSize = 1 << 13;
-
-  FD::shared_ptr _fd;
-  size_t _buffer_pos = 0;
-  std::byte _buffer[BufferSize];
-  size_t _buffer_size = 0;
-  bool _eof = false;
-  std::optional<Error> _last_error;
+  virtual OrError<std::string> read_all() = 0;
+  virtual OrError<std::vector<std::byte>> read_all_bytes() = 0;
+  virtual OrError<char> read_char() = 0;
 };
 
 } // namespace bee

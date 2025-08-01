@@ -1,16 +1,39 @@
-#include <limits>
+#include <functional>
 #include <numbers>
 
 #include "date.hpp"
 #include "float_of_string.hpp"
 #include "parse_string.hpp"
 #include "print.hpp"
+#include "simple_checksum.hpp"
 #include "string_util.hpp"
 #include "time.hpp"
 #include "to_string.hpp"
 
 namespace bee {
 namespace {
+
+struct BenchmarkInfo {
+  void (*run)();
+  std::string name;
+};
+
+std::vector<BenchmarkInfo>& benchs_singleton()
+{
+  static std::vector<BenchmarkInfo> benchs;
+  return benchs;
+}
+
+int add_to_benchs(void (*run)(), const std::string& name)
+{
+  benchs_singleton().push_back({run, name});
+  return 0;
+}
+
+#define BENCH(name)                                                            \
+  void bench_##name();                                                         \
+  const int _add_##name = add_to_benchs(bench_##name, #name);                  \
+  void bench_##name()
 
 template <class T> [[clang::noinline]] auto do_not_optimize_away(T&& t)
 {
@@ -24,7 +47,7 @@ template <class T> void time_it(const char* name, T&& f)
   int64_t repeat = 1;
   int64_t count = 0;
   auto output = f();
-  auto threshold = Span::of_seconds(1.0);
+  auto threshold = Span::of_int_seconds(1);
   Span ellapsed = Span::zero();
   while (true) {
     for (int i = 0; i < repeat; i++) { do_not_optimize_away(f()); }
@@ -39,7 +62,14 @@ template <class T> void time_it(const char* name, T&& f)
   P("{,}/call, calls:{}, total:{,}", ellapsed / count, count, ellapsed);
 }
 
-void run_format_benchmark()
+BENCH(SimpleChecksum)
+{
+  std::string text(100000, 55);
+  time_it(
+    "SimpleChecksum", [&]() { return SimpleChecksum::string_checksum(text); });
+}
+
+BENCH(format)
 {
   time_it("Convert pi to string using std::to_string", []() {
     return std::to_string(std::numbers::pi);
@@ -67,7 +97,7 @@ void run_format_benchmark()
     });
 }
 
-void run_date_benchmark()
+BENCH(date)
 {
   time_it(
     "Convert date to string", []() { return (Date() + 3000000).to_string(); });
@@ -79,7 +109,7 @@ void run_date_benchmark()
   time_it("Date to triple", []() { return Date(9999, 01, 01).to_triple(); });
 }
 
-void run_time_benchmark()
+BENCH(time)
 {
   time_it("Convert time to string", []() { return Time().to_string(); });
   time_it("Convert string to time", []() {
@@ -87,7 +117,7 @@ void run_time_benchmark()
   });
 }
 
-void run_parse_benchmark()
+BENCH(parse)
 {
   time_it(
     "bee::parse_string<int>", []() { return parse_string<int>("2012345678"); });
@@ -101,7 +131,7 @@ void run_parse_benchmark()
   time_it("std::stoll", []() { return std::stoll("2012345678123123123"); });
 }
 
-void run_float_parse_benchmark()
+BENCH(parse_float)
 {
   std::string num = "1.2347902837e89";
   time_it("std::stod", [&]() { return std::stod(num); });
@@ -110,40 +140,35 @@ void run_float_parse_benchmark()
   });
 }
 
-void run_noop_benchmark()
+BENCH(noop)
 {
   time_it("noop", []() { return 5; });
 }
 
 const std::string sep(80, '=');
-void print_banner(const char* name)
+void print_banner(const std::string_view name)
 {
-  std::string title = right_pad_string(name, 80 - 6);
+  const auto title = right_pad_string(name, 80 - 6);
   P(sep);
   P("== $ ==", title);
   P(sep);
 }
 
-int main()
+void main()
 {
-  print_banner("Float parse benchmark");
-  run_float_parse_benchmark();
-  print_banner("Format benchmark");
-  run_format_benchmark();
-  print_banner("Parse benchmark");
-  run_parse_benchmark();
-  print_banner("Date benchmark");
-  run_date_benchmark();
-  print_banner("Time benchmark");
-  run_time_benchmark();
-  print_banner("Noop benchmark");
-  run_noop_benchmark();
+  for (const auto& bench : benchs_singleton()) {
+    print_banner(bench.name);
+    bench.run();
+  }
   P(sep);
   P("Done!");
-  return 0;
 }
 
 } // namespace
 } // namespace bee
 
-int main() { return bee::main(); }
+int main()
+{
+  bee::main();
+  return 0;
+}

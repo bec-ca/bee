@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <memory>
 
 #include "data_buffer.hpp"
@@ -16,7 +15,7 @@ struct FD final : public Writer {
   using shared_ptr = std::shared_ptr<FD>;
   using unique_ptr = std::unique_ptr<FD>;
 
-  explicit FD(int fd);
+  explicit FD(int fd, bool owns = true);
   virtual ~FD() noexcept;
 
   FD(const FD& other) = delete;
@@ -28,7 +27,7 @@ struct FD final : public Writer {
   static OrError<FD> create_file(const FilePath& filename);
   static OrError<FD> open_file(const FilePath& filename);
   static OrError<FD> open_file(
-    const FilePath& filename, const FileModeBitSet& mode);
+    const FilePath& filename, const FileModeBitSet mode);
 
   virtual bool close() override;
   bool is_closed();
@@ -54,8 +53,6 @@ struct FD final : public Writer {
   OrError<ReadResult> read_all_available(DataBuffer& buffer);
   OrError<ReadResult> recv_all_available(DataBuffer& buffer);
 
-  OrError<std::optional<FD>> accept();
-
   OrError<> flush();
 
   int int_fd() const;
@@ -79,6 +76,7 @@ struct FD final : public Writer {
  private:
   int _fd;
   bool _write_blocked;
+  bool _owns;
 };
 
 struct Pipe {

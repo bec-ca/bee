@@ -1,7 +1,5 @@
 #include "format.hpp"
 
-#include <stdexcept>
-
 #include "exn.hpp"
 
 using std::string;
@@ -40,7 +38,7 @@ std::optional<FormatParams> get_next_format(
   };
   while (fmt[idx]) {
     FormatParams params;
-    if ((fmt[idx] == '$' && fmt[idx + 1] != '$')) {
+    if (fmt[idx] == '$' && fmt[idx + 1] != '$') {
       idx++;
       return FormatParams();
     } else if (fmt[idx] == '$' && fmt[idx + 1] == '$') {

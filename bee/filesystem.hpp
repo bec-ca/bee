@@ -27,7 +27,10 @@ struct FileSystem {
 
   [[nodiscard]] static OrError<> mkdirs(const FilePath& path);
 
+  // Remove a single file
   [[nodiscard]] static OrError<> remove(const FilePath& path);
+
+  // Remove files recursively if path is a directory
   [[nodiscard]] static OrError<> remove_all(const FilePath& path);
 
   [[nodiscard]] static OrError<> touch_file(const FilePath& filename);
@@ -37,6 +40,8 @@ struct FileSystem {
   [[nodiscard]] static OrError<> copy(const FilePath& from, const FilePath& to);
 
   [[nodiscard]] static OrError<Time> file_mtime(const FilePath& filename);
+  [[nodiscard]] static OrError<> set_file_mtime(
+    const FilePath& filename, Time time);
 
   [[nodiscard]] static bool exists(const FilePath& filename);
   [[nodiscard]] static bool is_directory(const FilePath& filename);

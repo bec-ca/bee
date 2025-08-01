@@ -10,8 +10,8 @@ namespace bee {
 namespace {
 
 std::vector<std::string> split_impl(
-  const std::string_view& str,
-  const std::string_view& sep,
+  const std::string_view str,
+  const std::string_view sep,
   bool include_trailing_empty)
 {
   assert(!sep.empty());
@@ -34,13 +34,13 @@ std::vector<std::string> split_impl(
 } // namespace
 
 std::vector<std::string> split(
-  const std::string_view& str, const std::string_view& sep)
+  const std::string_view str, const std::string_view sep)
 {
   return split_impl(str, sep, true);
 }
 
 std::vector<std::string> split_space(
-  const std::string_view& str, const int max_parts)
+  const std::string_view str, const int max_parts)
 {
   std::vector<std::string> output;
   std::string partial;
@@ -66,35 +66,36 @@ std::vector<std::string> split_space(
   return output;
 }
 
-std::vector<std::string> split_lines(const std::string_view& str)
+std::vector<std::string> split_lines(const std::string_view str)
 {
   return split_impl(str, "\n", false);
 }
 
-std::string right_pad_string(std::string str, size_t length)
+std::string right_pad_string(const std::string_view str, size_t length)
 {
-  while (str.size() < length) { str += ' '; }
-  return str;
+  std::string copy{str};
+  while (copy.size() < length) { copy += ' '; }
+  return copy;
 }
 
 std::optional<std::string> remove_prefix(
-  const std::string_view& str, const std::string_view& prefix)
+  const std::string_view str, const std::string_view prefix)
 {
   if (!str.starts_with(prefix)) { return std::nullopt; }
   return std::string(str.substr(prefix.size()));
 }
 
 std::optional<std::string> remove_suffix(
-  const std::string_view& str, const std::string_view& suffix)
+  const std::string_view str, const std::string_view suffix)
 {
   if (!str.ends_with(suffix)) { return std::nullopt; }
   return std::string(str.substr(0, str.size() - suffix.size()));
 }
 
-std::string find_and_replace(
-  const std::string_view& str,
-  const std::string_view& needle,
-  const std::string_view& rep)
+std::string find_and_replace_all(
+  const std::string_view str,
+  const std::string_view needle,
+  const std::string_view rep)
 {
   std::string output;
   size_t pos = 0;
@@ -113,7 +114,7 @@ std::string find_and_replace(
   return output;
 }
 
-std::string trim_spaces(const std::string_view& str)
+std::string trim_spaces(const std::string_view str)
 {
   size_t begin;
   for (begin = 0; begin < str.size(); begin++) {
@@ -128,25 +129,24 @@ std::string trim_spaces(const std::string_view& str)
   return std::string(str.substr(begin, end - begin));
 }
 
-bool contains_string(
-  const std::string_view& str, const std::string_view& needle)
+bool contains_string(const std::string_view str, const std::string_view needle)
 {
   return str.find(needle) != std::string::npos;
 }
 
-template <class F> std::string map_string(const std::string_view& str, F&& f)
+template <class F> std::string map_string(const std::string_view str, F&& f)
 {
   std::string out;
   for (const char c : str) { out.push_back(f(c)); }
   return out;
 }
 
-std::string to_lower(const std::string_view& str)
+std::string to_lower(const std::string_view str)
 {
   return map_string(str, tolower);
 }
 
-std::string to_upper(const std::string_view& str)
+std::string to_upper(const std::string_view str)
 {
   return map_string(str, toupper);
 }

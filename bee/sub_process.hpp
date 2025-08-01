@@ -8,6 +8,7 @@
 #include "fd.hpp"
 #include "file_path.hpp"
 #include "or_error.hpp"
+#include "signal.hpp"
 #include "time.hpp"
 
 namespace bee {
@@ -39,7 +40,7 @@ struct SubProcess {
 
     bool operator<(const Pid& other) const;
 
-    OrError<> kill();
+    OrError<> signal(SignalCode signal);
 
    private:
     explicit Pid(int pid);
@@ -100,7 +101,7 @@ struct SubProcess {
 
   [[nodiscard]] OrError<> wait();
 
-  [[nodiscard]] OrError<> kill();
+  [[nodiscard]] OrError<> signal(SignalCode signal);
 
   explicit SubProcess(Pid pid);
 
